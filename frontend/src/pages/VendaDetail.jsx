@@ -56,10 +56,16 @@ const VendaDetail = () => {
             <div><h1 className="text-2xl font-bold text-white font-['Outfit']">Detalhes da Venda</h1><p className="text-sm text-gray-400">ID: {venda.id.slice(0, 8)}...</p></div>
           </div>
         </div>
-        <Button onClick={() => window.print()} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-imprimir"><Printer className="w-4 h-4 mr-2" />Imprimir</Button>
+        <Button onClick={handlePrint} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-imprimir"><Printer className="w-4 h-4 mr-2" />Imprimir</Button>
       </div>
 
       <div ref={printRef} className="print-content">
+        {/* Print Header - Only visible when printing */}
+        <div className="print-header">
+          <h1>{lojaNome || lojaSlug}</h1>
+          <p>Comprovante de Venda</p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Calendar className="w-5 h-5 text-blue-500" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Data</p><p className="text-white font-medium">{formatDate(venda.data)}</p></div></div></CardContent></Card>
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><User className="w-5 h-5 text-green-500" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Cliente</p><p className="text-white font-medium">{venda.cliente_nome}</p></div></div></CardContent></Card>
