@@ -583,7 +583,7 @@ async def verify_loja(slug: str):
     loja = await db.lojas.find_one({"slug": slug, "ativo": True}, {"_id": 0})
     if not loja:
         raise HTTPException(status_code=404, detail="Loja não encontrada")
-    return {"exists": True, "nome": loja["nome"], "slug": loja["slug"]}
+    return {"exists": True, "nome": loja["nome"], "slug": loja["slug"], "logo_url": loja.get("logo_url")}
 
 # Modelos
 @loja_router.get("/{slug}/modelos", response_model=List[ModeloWithQuantity])
