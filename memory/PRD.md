@@ -99,10 +99,11 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 
 ## Histórico de Implementação
 
-### 2026-02-10 - v1.0 MVP
-- Sistema single-tenant para Isaac Imports
-- Dashboard, Modelos, Produtos, Clientes
-- Ponto de Venda e Histórico de Vendas
+### 2026-02-10 - v2.1 Landing Page
+- Landing page para seleção de loja (`/`)
+- Endpoint `/api/loja/{slug}/verify` para validação
+- Correção de bug com useState no Login.jsx
+- Fluxo completo: Home → Verificar Loja → Login → Dashboard
 
 ### 2026-02-10 - v2.0 Multi-Tenant
 - Arquitetura multi-tenant completa
@@ -110,6 +111,11 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - Criação de usuários por loja
 - Isolamento de dados por loja
 - Taxa de sucesso nos testes: 94.6%
+
+### 2026-02-10 - v1.0 MVP
+- Sistema single-tenant para Isaac Imports
+- Dashboard, Modelos, Produtos, Clientes
+- Ponto de Venda e Histórico de Vendas
 
 ## URLs do Sistema
 - **Login Loja**: /login
