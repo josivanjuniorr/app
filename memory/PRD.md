@@ -1,116 +1,112 @@
-# Isaac Imports - Product Requirements Document
+# CellControl - Product Requirements Document
 
 ## Visão Geral
-Sistema de controle de celulares para lojas de importados, permitindo gestão completa de estoque, clientes e vendas.
+Sistema multi-tenant de controle de celulares para múltiplas lojas de importados. Permite que um Super Admin gerencie várias lojas, cada uma com seu próprio domínio e dados isolados.
 
 ## Stack Tecnológica
 - **Frontend**: React 19 + Tailwind CSS + Shadcn UI
 - **Backend**: FastAPI (Python)
-- **Database**: MongoDB
+- **Database**: MongoDB (multi-tenant)
 - **Autenticação**: JWT
 
+## Arquitetura Multi-Tenant
+- Super Admin: Acesso em `/admin`, gerencia todas as lojas
+- Admin de Loja: Acesso em `/{slug-da-loja}`, gerencia apenas sua loja
+- Dados completamente isolados por loja
+
 ## Personas
-1. **Lojista/Admin**: Gerencia estoque, clientes e realiza vendas
-2. **Funcionário**: Acessa o ponto de venda e cadastra produtos
+1. **Super Admin**: Cria lojas, gerencia usuários, vê estatísticas globais
+2. **Admin de Loja**: Gerencia estoque, clientes e realiza vendas na sua loja
 
-## Funcionalidades Implementadas (v1.0)
+## Funcionalidades Implementadas (v2.0)
 
-### Autenticação ✅
-- [x] Login com email/senha
-- [x] JWT token com expiração 24h
+### Painel Super Admin ✅
+- [x] Login separado em /admin/login
+- [x] Dashboard com estatísticas globais
+- [x] CRUD de Lojas (criar, ativar/desativar)
+- [x] CRUD de Usuários (criar admin para cada loja)
+- [x] Visualização de performance por loja
+
+### Autenticação Multi-Tenant ✅
+- [x] JWT com role (super_admin, loja_admin)
+- [x] Redirecionamento automático por role
+- [x] Isolamento de acesso por loja
 - [x] Logout com limpeza de sessão
-- [x] Usuário padrão: admin@isaac.com / 123456
 
-### Dashboard ✅
-- [x] Cards com estatísticas (modelos, produtos, clientes, vendas)
-- [x] Lista de modelos sem estoque
-- [x] Top modelos mais vendidos (com filtro por mês)
-- [x] Lista de modelos com estoque
-
-### Modelos de Celulares ✅
-- [x] Listagem com busca
-- [x] Criar modelo
-- [x] Editar modelo
-- [x] Excluir modelo (se não houver produtos vinculados)
-- [x] Ver detalhes com produtos
-
-### Produtos ✅
-- [x] Listagem com busca e filtro por modelo
-- [x] Criar produto (cor, memória, bateria, IMEI, preço)
-- [x] Editar produto
-- [x] Excluir produto
-- [x] Validação: cor e memória obrigatórios
-
-### Clientes ✅
-- [x] Listagem com busca
-- [x] Criar cliente (nome, CPF, WhatsApp)
-- [x] Editar cliente
-- [x] Excluir cliente
-- [x] Validação: CPF 11 dígitos, WhatsApp 10-11 dígitos
-- [x] Máscara de formatação
-
-### Ponto de Venda ✅
-- [x] Busca e seleção de cliente
-- [x] Busca e adição de produtos ao carrinho
-- [x] Remoção de produtos do carrinho
-- [x] Cálculo automático do total
-- [x] Seleção de forma de pagamento
-- [x] Campo de observação
-- [x] Finalização da venda
-
-### Vendas ✅
-- [x] Listagem com busca
-- [x] Detalhes da venda
-- [x] Itens vendidos
-- [x] Informações do cliente
-- [x] Botão imprimir
+### Painel de Loja ✅
+- [x] Dashboard com estatísticas da loja
+- [x] CRUD de Modelos de celulares
+- [x] CRUD de Produtos (cor, memória, bateria, IMEI, preço)
+- [x] CRUD de Clientes (validação CPF/WhatsApp)
+- [x] Ponto de Venda completo
+- [x] Histórico de Vendas
 
 ## Design System
-- **Cor Primária**: #D4AF37 (Dourado)
+- **Super Admin**: Paleta roxa (#9333EA)
+- **Lojas**: Paleta dourada (#D4AF37)
 - **Background**: #0A0A0A (Dark)
 - **Fonte Títulos**: Outfit
 - **Fonte Corpo**: Manrope
-- **Tema**: Dark Luxury
+
+## Lojas Cadastradas
+
+### Isaac Imports
+- **URL**: /isaacimports
+- **Admin**: admin@isaacimports.com / 123456
+- **Status**: Ativa
+
+## Credenciais de Acesso
+
+### Super Admin
+- **URL**: /admin/login
+- **Email**: superadmin@cellcontrol.com
+- **Senha**: admin123
+
+### Isaac Imports (Loja Exemplo)
+- **URL**: /login -> /isaacimports
+- **Email**: admin@isaacimports.com
+- **Senha**: 123456
 
 ## Melhorias Futuras (Backlog)
 
 ### P0 (Crítico)
-- [ ] Relatórios de vendas por período
-- [ ] Backup automático dos dados
+- [ ] Recuperação de senha
+- [ ] Logs de atividade por loja
 
 ### P1 (Alta Prioridade)
-- [ ] Múltiplos usuários com níveis de acesso
-- [ ] Histórico de compras por cliente
+- [ ] Relatórios de vendas por período
+- [ ] Exportação de dados (CSV/Excel)
 - [ ] Notificações de estoque baixo
-- [ ] Impressão de recibo de venda
 
 ### P2 (Média Prioridade)
-- [ ] Gráficos no dashboard (vendas por dia/mês)
-- [ ] Exportação de dados (CSV/Excel)
-- [ ] Cadastro de fornecedores
-- [ ] Controle de garantia dos produtos
+- [ ] Múltiplos usuários por loja (vendedor, gerente)
+- [ ] Dashboard com gráficos
+- [ ] Integração WhatsApp Business
 
 ### P3 (Baixa Prioridade)
 - [ ] App mobile (PWA)
-- [ ] Integração com WhatsApp Business
 - [ ] Sistema de promoções/descontos
+- [ ] API pública para integrações
 
 ## Histórico de Implementação
 
 ### 2026-02-10 - v1.0 MVP
-- Implementação completa do sistema
-- Dashboard com estatísticas
-- CRUD de Modelos, Produtos, Clientes
-- Ponto de Venda funcional
-- Histórico de Vendas
-- Design Dark Luxury com paleta dourada
-- Autenticação JWT
-- Taxa de sucesso nos testes: 97.6%
+- Sistema single-tenant para Isaac Imports
+- Dashboard, Modelos, Produtos, Clientes
+- Ponto de Venda e Histórico de Vendas
 
-## Credenciais de Acesso
-- **Email**: admin@isaac.com
-- **Senha**: 123456
+### 2026-02-10 - v2.0 Multi-Tenant
+- Arquitetura multi-tenant completa
+- Painel Super Admin para gestão de lojas
+- Criação de usuários por loja
+- Isolamento de dados por loja
+- Taxa de sucesso nos testes: 94.6%
 
-## URLs
-- **Frontend**: https://cellphonecontrol.preview.emergentagent.com
-- **API**: https://cellphonecontrol.preview.emergentagent.com/api
+## URLs do Sistema
+- **Login Loja**: /login
+- **Login Admin**: /admin/login
+- **Dashboard Admin**: /admin
+- **Dashboard Loja**: /{slug-da-loja}
+- **API Base**: /api
+- **API Admin**: /api/admin/*
+- **API Loja**: /api/loja/{slug}/*
