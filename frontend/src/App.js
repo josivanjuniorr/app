@@ -5,8 +5,11 @@ import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
-// Store Pages
+// Home & Auth Pages
+import Home from "@/pages/Home";
 import Login from "@/pages/Login";
+
+// Store Pages
 import Dashboard from "@/pages/Dashboard";
 import Modelos from "@/pages/Modelos";
 import ModeloForm from "@/pages/ModeloForm";
@@ -49,6 +52,7 @@ export const useAuth = () => {
 const ProtectedStoreRoute = ({ children }) => {
   const { token, user, loading } = useAuth();
   const location = useLocation();
+  const slug = location.pathname.split('/')[1];
 
   if (loading) {
     return (
@@ -59,11 +63,16 @@ const ProtectedStoreRoute = ({ children }) => {
   }
 
   if (!token || !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={`/${slug}/login`} state={{ from: location }} replace />;
   }
 
   if (user.role === "super_admin") {
     return <Navigate to="/admin" replace />;
+  }
+
+  // Verify user has access to this store
+  if (user.loja_slug !== slug) {
+    return <Navigate to={`/${user.loja_slug}`} replace />;
   }
 
   return children;
@@ -96,9 +105,12 @@ const ProtectedAdminRoute = ({ children }) => {
 // Store Layout with Sidebar
 const StoreLayout = ({ children }) => {
   const { user } = useAuth();
+  const location = useLocation();
+  const slug = location.pathname.split('/')[1];
+  
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex">
-      <Sidebar lojaSlug={user?.loja_slug} lojaNome={user?.loja_nome} />
+      <Sidebar lojaSlug={slug} lojaNome={user?.loja_nome} />
       <main className="flex-1 ml-64 p-6 md:p-8 lg:p-12">
         {children}
       </main>
@@ -119,15 +131,13 @@ const AdminLayout = ({ children }) => {
 };
 
 function AppContent() {
-  const { user } = useAuth();
-  
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
+      {/* Home - Store Domain Entry */}
+      <Route path="/" element={<Home />} />
       
       {/* Admin Routes */}
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={
         <ProtectedAdminRoute>
           <AdminLayout><AdminDashboard /></AdminLayout>
@@ -163,6 +173,9 @@ function AppContent() {
           <AdminLayout><AdminUsuarioForm /></AdminLayout>
         </ProtectedAdminRoute>
       } />
+      
+      {/* Store Login Route */}
+      <Route path="/:slug/login" element={<Login />} />
       
       {/* Store Routes - Dynamic slug */}
       <Route path="/:slug" element={
@@ -236,9 +249,8 @@ function AppContent() {
         </ProtectedStoreRoute>
       } />
       
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
