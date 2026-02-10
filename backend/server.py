@@ -918,10 +918,45 @@ async def delete_venda(slug: str, venda_id: str, payload: dict = Depends(require
 async def root():
     return {"message": "CellControl API", "version": "2.0.0"}
 
+# ============== FILE UPLOAD ==============
+
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+@api_router.post("/upload/logo")
+async def upload_logo(file: UploadFile = File(...), payload: dict = Depends(verify_token)):
+    """Upload logo image for a store"""
+    
+    # Check file extension
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Tipo de arquivo não permitido. Use: {', '.join(ALLOWED_EXTENSIONS)}")
+    
+    # Read file content
+    content = await file.read()
+    
+    # Check file size
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo muito grande. Máximo: 5MB")
+    
+    # Generate unique filename
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Save file
+    async with aiofiles.open(file_path, 'wb') as f:
+        await f.write(content)
+    
+    # Return the URL path
+    return {"url": f"/api/uploads/{unique_filename}", "filename": unique_filename}
+
 # Include routers
 app.include_router(api_router)
 app.include_router(admin_router)
 app.include_router(loja_router)
+
+# Mount static files for uploads
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
