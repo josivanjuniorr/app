@@ -19,24 +19,25 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [lojaNome, setLojaNome] = useState("");
 
-  // Redirect if already logged in
-  if (token && user) {
-    if (user.role === "super_admin") {
-      navigate("/admin");
-    } else if (user.loja_slug) {
-      navigate(`/${user.loja_slug}`);
-    }
-    return null;
-  }
-
   // Fetch store name on mount
-  useState(() => {
+  useEffect(() => {
     if (slug) {
       axios.get(`${API}/loja/${slug}/verify`)
         .then(res => setLojaNome(res.data.nome))
         .catch(() => navigate("/"));
     }
-  }, [slug]);
+  }, [slug, navigate]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (token && user) {
+      if (user.role === "super_admin") {
+        navigate("/admin");
+      } else if (user.loja_slug) {
+        navigate(`/${user.loja_slug}`);
+      }
+    }
+  }, [token, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
