@@ -81,6 +81,8 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [ ] Logs de atividade por loja
 
 ### P1 (Alta Prioridade)
+- [ ] Máscaras de input para CPF e WhatsApp nos formulários de clientes
+- [ ] Funcionalidade de "Imprimir" na página de detalhes de vendas
 - [ ] Relatórios de vendas por período
 - [ ] Exportação de dados (CSV/Excel)
 - [ ] Notificações de estoque baixo
