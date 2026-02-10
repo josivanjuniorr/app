@@ -62,54 +62,124 @@ class CellControlAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
 
-    def test_seed_data(self):
-        """Test seed data creation"""
+    def test_super_admin_login(self):
+        """Test super admin login"""
         success, response = self.run_test(
-            "Seed Data",
-            "POST",
-            "seed",
-            200
-        )
-        return success
-
-    def test_login(self):
-        """Test login and get token"""
-        success, response = self.run_test(
-            "Login",
+            "Super Admin Login",
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@isaac.com", "senha": "123456"}
+            data={"email": "superadmin@cellcontrol.com", "senha": "admin123"}
         )
         if success and 'token' in response:
-            self.token = response['token']
-            print(f"   Token obtained: {self.token[:20]}...")
+            self.admin_token = response['token']
+            print(f"   Admin token obtained: {self.admin_token[:20]}...")
             return True
         return False
 
-    def test_auth_me(self):
-        """Test get current user"""
+    def test_loja_admin_login(self):
+        """Test loja admin login"""
         success, response = self.run_test(
-            "Get Current User",
+            "Loja Admin Login",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "admin@isaacimports.com", "senha": "123456"}
+        )
+        if success and 'token' in response:
+            self.loja_token = response['token']
+            print(f"   Loja token obtained: {self.loja_token[:20]}...")
+            return True
+        return False
+
+    def test_admin_dashboard(self):
+        """Test admin dashboard"""
+        success, response = self.run_test(
+            "Admin Dashboard",
             "GET",
-            "auth/me",
-            200
+            "admin/dashboard",
+            200,
+            token=self.admin_token
+        )
+        if success:
+            required_fields = ['total_lojas', 'lojas_ativas', 'total_usuarios', 'total_vendas_global']
+            for field in required_fields:
+                if field not in response:
+                    print(f"   Warning: Missing field {field} in admin dashboard")
+        return success
+
+    def test_admin_list_lojas(self):
+        """Test admin list lojas"""
+        success, response = self.run_test(
+            "Admin List Lojas",
+            "GET",
+            "admin/lojas",
+            200,
+            token=self.admin_token
         )
         return success
 
-    def test_dashboard(self):
-        """Test dashboard endpoint"""
+    def test_admin_create_loja(self):
+        """Test admin create loja"""
         success, response = self.run_test(
-            "Dashboard Stats",
+            "Admin Create Loja",
+            "POST",
+            "admin/lojas",
+            200,
+            data={"nome": "Test Store", "slug": "teststore"},
+            token=self.admin_token
+        )
+        if success and 'id' in response:
+            self.created_ids['lojas'].append(response['id'])
+            print(f"   Created loja ID: {response['id']}")
+        return success, response.get('id') if success else None
+
+    def test_admin_list_usuarios(self):
+        """Test admin list usuarios"""
+        success, response = self.run_test(
+            "Admin List Usuarios",
             "GET",
-            "dashboard",
-            200
+            "admin/usuarios",
+            200,
+            token=self.admin_token
+        )
+        return success
+
+    def test_admin_create_usuario(self, loja_id):
+        """Test admin create usuario"""
+        success, response = self.run_test(
+            "Admin Create Usuario",
+            "POST",
+            "admin/usuarios",
+            200,
+            data={
+                "email": "test@teststore.com",
+                "nome": "Test User",
+                "senha": "testpass",
+                "role": "loja_admin",
+                "loja_id": loja_id
+            },
+            token=self.admin_token
+        )
+        if success and 'id' in response:
+            self.created_ids['usuarios'].append(response['id'])
+            print(f"   Created usuario ID: {response['id']}")
+        return success, response.get('id') if success else None
+
+    def test_loja_dashboard(self):
+        """Test loja dashboard"""
+        success, response = self.run_test(
+            "Loja Dashboard",
+            "GET",
+            "loja/isaacimports/dashboard",
+            200,
+            token=self.loja_token
         )
         if success:
             required_fields = ['total_modelos', 'total_produtos', 'total_clientes', 'total_vendas']
             for field in required_fields:
                 if field not in response:
-                    print(f"   Warning: Missing field {field} in dashboard response")
+                    print(f"   Warning: Missing field {field} in loja dashboard")
         return success
 
     def test_create_modelo(self):
@@ -117,9 +187,10 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Create Modelo",
             "POST",
-            "modelos",
+            "loja/isaacimports/modelos",
             200,
-            data={"nome": "iPhone 15 Pro Max"}
+            data={"nome": "iPhone 15 Pro Max"},
+            token=self.loja_token
         )
         if success and 'id' in response:
             self.created_ids['modelos'].append(response['id'])
@@ -131,8 +202,9 @@ class CellControlAPITester:
         success, response = self.run_test(
             "List Modelos",
             "GET",
-            "modelos",
-            200
+            "loja/isaacimports/modelos",
+            200,
+            token=self.loja_token
         )
         return success
 
@@ -141,8 +213,9 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Get Modelo",
             "GET",
-            f"modelos/{modelo_id}",
-            200
+            f"loja/isaacimports/modelos/{modelo_id}",
+            200,
+            token=self.loja_token
         )
         return success
 
@@ -151,9 +224,10 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Update Modelo",
             "PUT",
-            f"modelos/{modelo_id}",
+            f"loja/isaacimports/modelos/{modelo_id}",
             200,
-            data={"nome": "iPhone 15 Pro Max Updated"}
+            data={"nome": "iPhone 15 Pro Max Updated"},
+            token=self.loja_token
         )
         return success
 
@@ -162,7 +236,7 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Create Produto",
             "POST",
-            "produtos",
+            "loja/isaacimports/produtos",
             200,
             data={
                 "modelo_id": modelo_id,
@@ -171,7 +245,8 @@ class CellControlAPITester:
                 "bateria": 100,
                 "imei": "123456789012345",
                 "preco": 8999.99
-            }
+            },
+            token=self.loja_token
         )
         if success and 'id' in response:
             self.created_ids['produtos'].append(response['id'])
@@ -183,8 +258,9 @@ class CellControlAPITester:
         success, response = self.run_test(
             "List Produtos",
             "GET",
-            "produtos",
-            200
+            "loja/isaacimports/produtos",
+            200,
+            token=self.loja_token
         )
         return success
 
@@ -193,14 +269,15 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Create Cliente",
             "POST",
-            "clientes",
+            "loja/isaacimports/clientes",
             200,
             data={
                 "nome": "João Silva",
                 "cpf": "12345678901",
                 "whatsapp": "11987654321",
                 "email": "joao@email.com"
-            }
+            },
+            token=self.loja_token
         )
         if success and 'id' in response:
             self.created_ids['clientes'].append(response['id'])
@@ -212,8 +289,9 @@ class CellControlAPITester:
         success, response = self.run_test(
             "List Clientes",
             "GET",
-            "clientes",
-            200
+            "loja/isaacimports/clientes",
+            200,
+            token=self.loja_token
         )
         return success
 
@@ -222,13 +300,14 @@ class CellControlAPITester:
         success, response = self.run_test(
             "CPF Validation (Invalid)",
             "POST",
-            "clientes",
+            "loja/isaacimports/clientes",
             400,
             data={
                 "nome": "Test Invalid CPF",
                 "cpf": "123",  # Invalid CPF
                 "whatsapp": "11987654321"
-            }
+            },
+            token=self.loja_token
         )
         return success  # Success means it correctly rejected invalid CPF
 
@@ -237,13 +316,14 @@ class CellControlAPITester:
         success, response = self.run_test(
             "WhatsApp Validation (Invalid)",
             "POST",
-            "clientes",
+            "loja/isaacimports/clientes",
             400,
             data={
                 "nome": "Test Invalid WhatsApp",
                 "cpf": "12345678901",
                 "whatsapp": "123"  # Invalid WhatsApp
-            }
+            },
+            token=self.loja_token
         )
         return success  # Success means it correctly rejected invalid WhatsApp
 
@@ -252,14 +332,15 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Create Venda",
             "POST",
-            "vendas",
+            "loja/isaacimports/vendas",
             200,
             data={
                 "cliente_id": cliente_id,
                 "produtos": produto_ids,
                 "forma_pagamento": "pix",
                 "observacao": "Venda de teste"
-            }
+            },
+            token=self.loja_token
         )
         if success and 'id' in response:
             self.created_ids['vendas'].append(response['id'])
@@ -271,8 +352,9 @@ class CellControlAPITester:
         success, response = self.run_test(
             "List Vendas",
             "GET",
-            "vendas",
-            200
+            "loja/isaacimports/vendas",
+            200,
+            token=self.loja_token
         )
         return success
 
@@ -281,8 +363,21 @@ class CellControlAPITester:
         success, response = self.run_test(
             "Get Venda",
             "GET",
-            f"vendas/{venda_id}",
-            200
+            f"loja/isaacimports/vendas/{venda_id}",
+            200,
+            token=self.loja_token
+        )
+        return success
+
+    def test_data_isolation(self):
+        """Test that loja admin cannot access other loja's data"""
+        # Try to access admin endpoints with loja token (should fail)
+        success, response = self.run_test(
+            "Data Isolation - Admin Dashboard Access",
+            "GET",
+            "admin/dashboard",
+            403,  # Should be forbidden
+            token=self.loja_token
         )
         return success
 
