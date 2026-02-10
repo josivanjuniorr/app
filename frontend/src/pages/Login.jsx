@@ -96,7 +96,7 @@ const Login = () => {
             {/* Logo da Loja */}
             {lojaInfo.logo_url ? (
               <img 
-                src={lojaInfo.logo_url} 
+                src={lojaInfo.logo_url.startsWith('/api') ? `${API.replace('/api', '')}${lojaInfo.logo_url}` : lojaInfo.logo_url} 
                 alt={lojaInfo.nome || "Logo"} 
                 className="mx-auto w-20 h-20 rounded-2xl object-cover shadow-[0_0_30px_rgba(212,175,55,0.3)]"
                 onError={(e) => {
