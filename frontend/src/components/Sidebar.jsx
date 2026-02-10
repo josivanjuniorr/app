@@ -66,7 +66,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
         <div className="flex items-center gap-3">
           {lojaInfo.logo_url ? (
             <img 
-              src={lojaInfo.logo_url} 
+              src={lojaInfo.logo_url.startsWith('/api') ? `${API.replace('/api', '')}${lojaInfo.logo_url}` : lojaInfo.logo_url} 
               alt={lojaInfo.nome || "Logo"} 
               className="w-10 h-10 rounded-lg object-cover"
               onError={(e) => {
