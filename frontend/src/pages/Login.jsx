@@ -17,13 +17,16 @@ const Login = () => {
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [lojaNome, setLojaNome] = useState("");
+  const [lojaInfo, setLojaInfo] = useState({ nome: "", logo_url: null });
 
-  // Fetch store name on mount
+  // Fetch store info on mount
   useEffect(() => {
     if (slug) {
       axios.get(`${API}/loja/${slug}/verify`)
-        .then(res => setLojaNome(res.data.nome))
+        .then(res => setLojaInfo({
+          nome: res.data.nome,
+          logo_url: res.data.logo_url
+        }))
         .catch(() => navigate("/"));
     }
   }, [slug, navigate]);
@@ -90,12 +93,27 @@ const Login = () => {
               <ArrowLeft className="w-5 h-5" />
             </button>
             
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-[#D4AF37] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)]">
+            {/* Logo da Loja */}
+            {lojaInfo.logo_url ? (
+              <img 
+                src={lojaInfo.logo_url} 
+                alt={lojaInfo.nome || "Logo"} 
+                className="mx-auto w-20 h-20 rounded-2xl object-cover shadow-[0_0_30px_rgba(212,175,55,0.3)]"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`mx-auto w-16 h-16 rounded-2xl bg-[#D4AF37] items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] ${lojaInfo.logo_url ? 'hidden' : 'flex'}`}
+            >
               <Store className="w-8 h-8 text-black" />
             </div>
+            
             <div>
               <CardTitle className="text-2xl font-bold text-white font-['Outfit']">
-                {lojaNome || slug}
+                {lojaInfo.nome || slug}
               </CardTitle>
               <CardDescription className="text-gray-400 mt-1">
                 <span className="text-[#D4AF37]">/{slug}</span> • Faça login para continuar
