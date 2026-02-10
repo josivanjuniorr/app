@@ -100,11 +100,14 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 
 ## Histórico de Implementação
 
-### 2026-02-10 - v2.1 Landing Page
+### 2026-02-10 - v2.1 Landing Page + P1 Features
 - Landing page para seleção de loja (`/`)
 - Endpoint `/api/loja/{slug}/verify` para validação
 - Correção de bug com useState no Login.jsx
 - Fluxo completo: Home → Verificar Loja → Login → Dashboard
+- Máscaras de CPF (`123.456.789-01`) e WhatsApp (`(11) 99999-8888`)
+- Funcionalidade de impressão de comprovante de venda
+- Estilos CSS otimizados para impressão (A4)
 
 ### 2026-02-10 - v2.0 Multi-Tenant
 - Arquitetura multi-tenant completa
