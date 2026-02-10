@@ -5,7 +5,7 @@ import { API, useAuth } from "@/App";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText } from "lucide-react";
+import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText, Store } from "lucide-react";
 import { toast } from "sonner";
 
 const VendaDetail = () => {
@@ -15,19 +15,28 @@ const VendaDetail = () => {
   const printRef = useRef();
   
   const [venda, setVenda] = useState(null);
+  const [lojaNome, setLojaNome] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (lojaSlug && id) fetchVenda(); }, [lojaSlug, id]);
+  useEffect(() => { if (lojaSlug && id) fetchData(); }, [lojaSlug, id]);
 
-  const fetchVenda = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API}/loja/${lojaSlug}/vendas/${id}`);
-      setVenda(response.data);
+      const [vendaRes, lojaRes] = await Promise.all([
+        axios.get(`${API}/loja/${lojaSlug}/vendas/${id}`),
+        axios.get(`${API}/loja/${lojaSlug}/verify`)
+      ]);
+      setVenda(vendaRes.data);
+      setLojaNome(lojaRes.data.nome);
     } catch (error) {
       toast.error("Erro ao carregar venda");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
