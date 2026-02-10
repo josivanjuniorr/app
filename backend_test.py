@@ -387,43 +387,70 @@ class CellControlAPITester:
         
         # Delete vendas first (they reference produtos and clientes)
         for venda_id in self.created_ids['vendas']:
-            self.run_test(f"Delete Venda {venda_id}", "DELETE", f"vendas/{venda_id}", 200)
+            self.run_test(f"Delete Venda {venda_id}", "DELETE", f"loja/isaacimports/vendas/{venda_id}", 200, token=self.loja_token)
         
         # Delete produtos (they reference modelos)
         for produto_id in self.created_ids['produtos']:
-            self.run_test(f"Delete Produto {produto_id}", "DELETE", f"produtos/{produto_id}", 200)
+            self.run_test(f"Delete Produto {produto_id}", "DELETE", f"loja/isaacimports/produtos/{produto_id}", 200, token=self.loja_token)
         
         # Delete clientes
         for cliente_id in self.created_ids['clientes']:
-            self.run_test(f"Delete Cliente {cliente_id}", "DELETE", f"clientes/{cliente_id}", 200)
+            self.run_test(f"Delete Cliente {cliente_id}", "DELETE", f"loja/isaacimports/clientes/{cliente_id}", 200, token=self.loja_token)
         
         # Delete modelos last
         for modelo_id in self.created_ids['modelos']:
-            self.run_test(f"Delete Modelo {modelo_id}", "DELETE", f"modelos/{modelo_id}", 200)
+            self.run_test(f"Delete Modelo {modelo_id}", "DELETE", f"loja/isaacimports/modelos/{modelo_id}", 200, token=self.loja_token)
+        
+        # Delete admin created data
+        for usuario_id in self.created_ids['usuarios']:
+            self.run_test(f"Delete Usuario {usuario_id}", "DELETE", f"admin/usuarios/{usuario_id}", 200, token=self.admin_token)
+        
+        for loja_id in self.created_ids['lojas']:
+            self.run_test(f"Delete Loja {loja_id}", "DELETE", f"admin/lojas/{loja_id}", 200, token=self.admin_token)
 
 def main():
-    print("🚀 Starting Isaac Imports API Tests")
+    print("🚀 Starting CellControl Multi-Tenant API Tests")
     print("=" * 50)
     
-    tester = IsaacImportsAPITester()
+    tester = CellControlAPITester()
     
     try:
-        # Test seed data
-        if not tester.test_seed_data():
-            print("❌ Seed data test failed, but continuing...")
-
-        # Test authentication
-        if not tester.test_login():
-            print("❌ Login failed, stopping tests")
+        # Test super admin authentication
+        if not tester.test_super_admin_login():
+            print("❌ Super admin login failed, stopping tests")
             return 1
 
-        if not tester.test_auth_me():
-            print("❌ Auth verification failed")
+        # Test admin functionality
+        if not tester.test_admin_dashboard():
+            print("❌ Admin dashboard test failed")
+
+        if not tester.test_admin_list_lojas():
+            print("❌ Admin list lojas failed")
+
+        if not tester.test_admin_list_usuarios():
+            print("❌ Admin list usuarios failed")
+
+        # Test admin create loja and usuario
+        loja_success, loja_id = tester.test_admin_create_loja()
+        if loja_success and loja_id:
+            usuario_success, usuario_id = tester.test_admin_create_usuario(loja_id)
+            if not usuario_success:
+                print("❌ Admin create usuario failed")
+        else:
+            print("❌ Admin create loja failed")
+
+        # Test loja admin authentication
+        if not tester.test_loja_admin_login():
+            print("❌ Loja admin login failed, stopping loja tests")
             return 1
 
-        # Test dashboard
-        if not tester.test_dashboard():
-            print("❌ Dashboard test failed")
+        # Test data isolation
+        if not tester.test_data_isolation():
+            print("❌ Data isolation test failed")
+
+        # Test loja functionality
+        if not tester.test_loja_dashboard():
+            print("❌ Loja dashboard test failed")
 
         # Test modelos
         modelo_success, modelo_id = tester.test_create_modelo()
