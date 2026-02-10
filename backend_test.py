@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class CellControlAPITester:
-    def __init__(self, base_url="https://cellphonecontrol.preview.emergentagent.com"):
+    def __init__(self, base_url="https://phoneinventory-4.preview.emergentagent.com"):
         self.base_url = base_url
         self.admin_token = None
         self.loja_token = None
