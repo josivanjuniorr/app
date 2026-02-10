@@ -44,9 +44,10 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] Dashboard com estatísticas da loja
 - [x] CRUD de Modelos de celulares
 - [x] CRUD de Produtos (cor, memória, bateria, IMEI, preço)
-- [x] CRUD de Clientes (validação CPF/WhatsApp)
+- [x] CRUD de Clientes (com máscaras de CPF e WhatsApp)
 - [x] Ponto de Venda completo
 - [x] Histórico de Vendas
+- [x] Impressão de comprovante de venda
 
 ## Design System
 - **Super Admin**: Paleta roxa (#9333EA)
