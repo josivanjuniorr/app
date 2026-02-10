@@ -1,34 +1,228 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
-}
+/* Isaac Imports - Custom Styles */
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
-}
-
-.App-header {
-    background-color: #0f0f10;
+.App {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+    background-color: #0A0A0A;
 }
 
-.App-link {
-    color: #61dafb;
+/* Gold gradient text */
+.gold-text {
+    background: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+/* Card base style */
+.card-base {
+    background-color: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* Button primary gold */
+.btn-gold {
+    background-color: #D4AF37;
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-gold:hover {
+    background-color: #B5952F;
+    transform: scale(1.02);
+}
+
+/* Button secondary */
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Button ghost */
+.btn-ghost {
+    color: #A1A1AA;
+    transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+    color: #D4AF37;
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+/* Input base */
+.input-base {
+    background-color: #0A0A0A;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.input-base::placeholder {
+    color: #52525B;
+}
+
+.input-base:focus {
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 1px #D4AF37;
+    outline: none;
+}
+
+/* Sidebar styles */
+.sidebar {
+    background-color: #0F0F0F;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-link {
+    color: #A1A1AA;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+    color: #D4AF37;
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+.sidebar-link.active {
+    color: #D4AF37;
+    background-color: rgba(212, 175, 55, 0.1);
+    border-left-color: #D4AF37;
+}
+
+/* Table styles */
+.table-container {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-header-cell {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #A1A1AA;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem;
+}
+
+.table-cell {
+    color: #E4E4E7;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-row:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Status badges */
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Login page background */
+.login-bg {
+    background-image: url('https://images.unsplash.com/photo-1673512703111-c38c42a1f1a3?crop=entropy&cs=srgb&fm=jpg&q=85');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.login-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* POS layout */
+.pos-column {
+    background-color: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.pos-item {
+    background-color: #1A1A1A;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pos-item:hover {
+    border-color: rgba(212, 175, 55, 0.3);
+    background-color: #1F1F1F;
+}
+
+.pos-item.selected {
+    border-color: #D4AF37;
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
     }
-    to {
-        transform: rotate(360deg);
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .print-content {
+        padding: 20px;
     }
 }
