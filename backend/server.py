@@ -855,6 +855,56 @@ async def get_venda(slug: str, venda_id: str, payload: dict = Depends(require_lo
         itens_parsed=[VendaItem(**item) for item in itens_parsed]
     )
 
+# Update Venda (only observacao and forma_pagamento can be updated)
+class VendaUpdate(BaseModel):
+    forma_pagamento: Optional[str] = None
+    observacao: Optional[str] = None
+
+@loja_router.put("/{slug}/vendas/{venda_id}", response_model=VendaConcluidaResponse)
+async def update_venda(slug: str, venda_id: str, venda_update: VendaUpdate, payload: dict = Depends(require_loja_access)):
+    loja = await verify_loja_access(slug, payload)
+    
+    venda = await db.vendas_concluidas.find_one({"id": venda_id, "loja_id": loja["id"]}, {"_id": 0})
+    if not venda:
+        raise HTTPException(status_code=404, detail="Venda não encontrada")
+    
+    update_data = {k: v for k, v in venda_update.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+    
+    await db.vendas_concluidas.update_one({"id": venda_id}, {"$set": update_data})
+    
+    updated_venda = await db.vendas_concluidas.find_one({"id": venda_id}, {"_id": 0})
+    cliente = await db.clientes.find_one({"id": updated_venda["cliente_id"]}, {"_id": 0})
+    cliente_nome = cliente["nome"] if cliente else "Cliente removido"
+    itens_parsed = json.loads(updated_venda.get("itens", "[]"))
+    
+    return VendaConcluidaResponse(
+        **updated_venda,
+        cliente_nome=cliente_nome,
+        itens_parsed=[VendaItem(**item) for item in itens_parsed]
+    )
+
+@loja_router.delete("/{slug}/vendas/{venda_id}")
+async def delete_venda(slug: str, venda_id: str, payload: dict = Depends(require_loja_access)):
+    loja = await verify_loja_access(slug, payload)
+    
+    venda = await db.vendas_concluidas.find_one({"id": venda_id, "loja_id": loja["id"]}, {"_id": 0})
+    if not venda:
+        raise HTTPException(status_code=404, detail="Venda não encontrada")
+    
+    # Restore products to available (not sold)
+    itens = json.loads(venda.get("itens", "[]"))
+    for item in itens:
+        await db.produtos.update_one({"id": item["produto_id"]}, {"$set": {"vendido": False}})
+    
+    # Delete the sale
+    result = await db.vendas_concluidas.delete_one({"id": venda_id, "loja_id": loja["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Venda não encontrada")
+    
+    return {"message": "Venda excluída com sucesso. Produtos retornados ao estoque."}
+
 # ============== ROOT ==============
 
 @api_router.get("/")
