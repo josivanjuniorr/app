@@ -43,12 +43,14 @@ loja_router = APIRouter(prefix="/api/loja")
 class LojaBase(BaseModel):
     nome: str
     slug: str
+    logo_url: Optional[str] = None
 
 class LojaCreate(LojaBase):
     pass
 
 class LojaUpdate(BaseModel):
     nome: Optional[str] = None
+    logo_url: Optional[str] = None
     ativo: Optional[bool] = None
 
 class Loja(LojaBase):
