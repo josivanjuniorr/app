@@ -48,6 +48,8 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] Ponto de Venda completo
 - [x] Histórico de Vendas
 - [x] Impressão de comprovante de venda
+- [x] Edição de venda (forma de pagamento e observação)
+- [x] Exclusão de venda (com devolução de produtos ao estoque)
 
 ## Design System
 - **Super Admin**: Paleta roxa (#9333EA)
