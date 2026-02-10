@@ -19,17 +19,14 @@ class CellControlAPITester:
             'vendas': []
         }
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, token=None):
         """Run a single API test"""
         url = f"{self.base_url}/api/{endpoint}"
         test_headers = {'Content-Type': 'application/json'}
         
-        if self.token:
-            test_headers['Authorization'] = f'Bearer {self.token}'
+        if token:
+            test_headers['Authorization'] = f'Bearer {token}'
         
-        if headers:
-            test_headers.update(headers)
-
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
         print(f"   URL: {url}")
