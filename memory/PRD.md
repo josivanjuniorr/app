@@ -118,10 +118,12 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - Ponto de Venda e Histórico de Vendas
 
 ## URLs do Sistema
-- **Login Loja**: /login
+- **Landing Page**: / (entrada principal com seleção de loja)
+- **Login Loja**: /{slug}/login
 - **Login Admin**: /admin/login
 - **Dashboard Admin**: /admin
-- **Dashboard Loja**: /{slug-da-loja}
+- **Dashboard Loja**: /{slug}
 - **API Base**: /api
 - **API Admin**: /api/admin/*
 - **API Loja**: /api/loja/{slug}/*
+- **Verificar Loja**: /api/loja/{slug}/verify
