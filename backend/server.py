@@ -575,6 +575,14 @@ async def loja_dashboard(slug: str, mes: Optional[str] = None, payload: dict = D
         top_modelos=top_modelos
     )
 
+# Verify store exists (public endpoint)
+@loja_router.get("/{slug}/verify")
+async def verify_loja(slug: str):
+    loja = await db.lojas.find_one({"slug": slug, "ativo": True}, {"_id": 0})
+    if not loja:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    return {"exists": True, "nome": loja["nome"], "slug": loja["slug"]}
+
 # Modelos
 @loja_router.get("/{slug}/modelos", response_model=List[ModeloWithQuantity])
 async def list_modelos(slug: str, payload: dict = Depends(require_loja_access)):
