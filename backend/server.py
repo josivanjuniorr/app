@@ -447,6 +447,9 @@ async def list_usuarios(payload: dict = Depends(require_super_admin)):
             loja = await db.lojas.find_one({"id": user["loja_id"]}, {"_id": 0})
             if loja:
                 loja_nome = loja["nome"]
+        # Ensure nome field exists (backward compatibility)
+        if "nome" not in user:
+            user["nome"] = user.get("email", "").split("@")[0]
         result.append(UsuarioResponse(**user, loja_nome=loja_nome))
     return result
 
