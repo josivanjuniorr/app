@@ -5,7 +5,7 @@ import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
-// Pages
+// Store Pages
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Modelos from "@/pages/Modelos";
@@ -19,8 +19,17 @@ import PontoVenda from "@/pages/PontoVenda";
 import Vendas from "@/pages/Vendas";
 import VendaDetail from "@/pages/VendaDetail";
 
+// Admin Pages
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminLojas from "@/pages/admin/AdminLojas";
+import AdminLojaForm from "@/pages/admin/AdminLojaForm";
+import AdminUsuarios from "@/pages/admin/AdminUsuarios";
+import AdminUsuarioForm from "@/pages/admin/AdminUsuarioForm";
+
 // Components
 import Sidebar from "@/components/Sidebar";
+import AdminSidebar from "@/components/AdminSidebar";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -36,9 +45,9 @@ export const useAuth = () => {
   return context;
 };
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { token, loading } = useAuth();
+// Protected Route for Store
+const ProtectedStoreRoute = ({ children }) => {
+  const { token, user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -49,18 +58,59 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!token) {
+  if (!token || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role === "super_admin") {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
 };
 
-// Layout with Sidebar
-const AppLayout = ({ children }) => {
+// Protected Route for Admin
+const ProtectedAdminRoute = ({ children }) => {
+  const { token, user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="text-[#D4AF37] text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!token || !user) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== "super_admin") {
+    return <Navigate to={`/${user.loja_slug}`} replace />;
+  }
+
+  return children;
+};
+
+// Store Layout with Sidebar
+const StoreLayout = ({ children }) => {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex">
-      <Sidebar />
+      <Sidebar lojaSlug={user?.loja_slug} lojaNome={user?.loja_nome} />
+      <main className="flex-1 ml-64 p-6 md:p-8 lg:p-12">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+// Admin Layout with Sidebar
+const AdminLayout = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] flex">
+      <AdminSidebar />
       <main className="flex-1 ml-64 p-6 md:p-8 lg:p-12">
         {children}
       </main>
@@ -69,150 +119,126 @@ const AppLayout = ({ children }) => {
 };
 
 function AppContent() {
+  const { user } = useAuth();
+  
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modelos"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Modelos />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modelos/novo"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ModeloForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modelos/editar/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ModeloForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modelos/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ModeloDetail />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/produtos"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Produtos />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/produtos/novo"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ProdutoForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/produtos/editar/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ProdutoForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/clientes"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Clientes />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/clientes/novo"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ClienteForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/clientes/editar/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ClienteForm />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ponto-venda"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <PontoVenda />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vendas"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Vendas />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vendas/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <VendaDetail />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminDashboard /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/lojas" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminLojas /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/lojas/nova" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminLojaForm /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/lojas/editar/:id" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminLojaForm /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/usuarios" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminUsuarios /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/usuarios/novo" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminUsuarioForm /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      <Route path="/admin/usuarios/editar/:id" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminUsuarioForm /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
+      
+      {/* Store Routes - Dynamic slug */}
+      <Route path="/:slug" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Dashboard /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/modelos" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Modelos /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/modelos/novo" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ModeloForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/modelos/editar/:id" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ModeloForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/modelos/:id" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ModeloDetail /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/produtos" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Produtos /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/produtos/novo" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ProdutoForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/produtos/editar/:id" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ProdutoForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/clientes" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Clientes /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/clientes/novo" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ClienteForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/clientes/editar/:id" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><ClienteForm /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/ponto-venda" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><PontoVenda /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/vendas" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Vendas /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/vendas/:id" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><VendaDetail /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

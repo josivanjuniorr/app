@@ -6,20 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Eye, EyeOff } from "lucide-react";
+import { Store, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, token } = useAuth();
+  const { login, token, user } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
-  if (token) {
-    navigate("/");
+  if (token && user) {
+    if (user.role === "super_admin") {
+      navigate("/admin");
+    } else if (user.loja_slug) {
+      navigate(`/${user.loja_slug}`);
+    }
     return null;
   }
 
@@ -34,11 +38,18 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await axios.post(`${API}/auth/login`, { email, senha });
-      const { token: newToken, user_id, user_email } = response.data;
+      const { token: newToken, user_id, user_email, user_nome, role, loja_id, loja_slug } = response.data;
       
-      login(newToken, { user_id, user_email });
+      login(newToken, { user_id, user_email, user_nome, role, loja_id, loja_slug });
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      
+      if (role === "super_admin") {
+        navigate("/admin");
+      } else if (loja_slug) {
+        navigate(`/${loja_slug}`);
+      } else {
+        toast.error("Usuário não vinculado a nenhuma loja");
+      }
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao fazer login";
       toast.error(message);
@@ -56,14 +67,14 @@ const Login = () => {
         <Card className="bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
           <CardHeader className="text-center space-y-4 pb-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-[#D4AF37] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-              <Smartphone className="w-8 h-8 text-black" />
+              <Store className="w-8 h-8 text-black" />
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-white font-['Outfit']">
-                Isaac Imports
+                CellControl
               </CardTitle>
               <CardDescription className="text-gray-400 mt-1">
-                Sistema de Controle de Celulares
+                Acesse sua loja
               </CardDescription>
             </div>
           </CardHeader>
@@ -120,16 +131,19 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-xs text-gray-500">
-                Acesso padrão: admin@isaac.com / 123456
+                Isaac Imports: admin@isaacimports.com / 123456
               </p>
+              <a href="/admin/login" className="text-xs text-purple-400 hover:text-purple-300">
+                Acesso Super Admin →
+              </a>
             </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-gray-600 text-xs mt-6">
-          Isaac Imports © {new Date().getFullYear()} - Todos os direitos reservados
+          CellControl © {new Date().getFullYear()} - Todos os direitos reservados
         </p>
       </div>
     </div>

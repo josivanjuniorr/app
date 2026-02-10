@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import { API } from "@/App";
+import { API, useAuth } from "@/App";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -17,18 +17,24 @@ import {
 import { toast } from "sonner";
 
 const Dashboard = () => {
+  const { slug } = useParams();
+  const { user } = useAuth();
+  const lojaSlug = slug || user?.loja_slug;
+  
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mesSelecionado, setMesSelecionado] = useState("");
 
   useEffect(() => {
-    fetchDashboard();
-  }, [mesSelecionado]);
+    if (lojaSlug) {
+      fetchDashboard();
+    }
+  }, [lojaSlug, mesSelecionado]);
 
   const fetchDashboard = async () => {
     try {
       const params = mesSelecionado ? { mes: mesSelecionado } : {};
-      const response = await axios.get(`${API}/dashboard`, { params });
+      const response = await axios.get(`${API}/loja/${lojaSlug}/dashboard`, { params });
       setStats(response.data);
     } catch (error) {
       toast.error("Erro ao carregar dashboard");
@@ -45,7 +51,6 @@ const Dashboard = () => {
     }).format(value || 0);
   };
 
-  // Generate month options
   const getMonthOptions = () => {
     const options = [];
     const now = new Date();
@@ -71,23 +76,23 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white font-['Outfit']">Dashboard Inicial</h1>
-          <p className="text-gray-400 mt-1">Visão geral do sistema Isaac Imports</p>
+          <h1 className="text-3xl font-bold text-white font-['Outfit']">Dashboard</h1>
+          <p className="text-gray-400 mt-1">Visão geral da sua loja</p>
         </div>
         <div className="flex gap-3">
-          <Link to="/modelos">
+          <Link to={`/${lojaSlug}/modelos`}>
             <Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-modelos">
               <Smartphone className="w-4 h-4 mr-2" />
               Modelos
             </Button>
           </Link>
-          <Link to="/clientes">
+          <Link to={`/${lojaSlug}/clientes`}>
             <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" data-testid="btn-clientes">
               <Users className="w-4 h-4 mr-2" />
               Clientes
             </Button>
           </Link>
-          <Link to="/ponto-venda">
+          <Link to={`/${lojaSlug}/ponto-venda`}>
             <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" data-testid="btn-vender">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Vender
@@ -173,7 +178,7 @@ const Dashboard = () => {
                 {stats.modelos_sem_estoque.map((modelo) => (
                   <li key={modelo.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
                     <span className="text-gray-300">{modelo.nome}</span>
-                    <Link to={`/modelos/${modelo.id}`}>
+                    <Link to={`/${lojaSlug}/modelos/${modelo.id}`}>
                       <Button size="sm" variant="ghost" className="text-[#D4AF37] hover:bg-[#D4AF37]/10">
                         Adicionar <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
@@ -251,7 +256,7 @@ const Dashboard = () => {
           {stats?.modelos_com_estoque?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {stats.modelos_com_estoque.map((modelo) => (
-                <Link key={modelo.id} to={`/modelos/${modelo.id}`}>
+                <Link key={modelo.id} to={`/${lojaSlug}/modelos/${modelo.id}`}>
                   <div className="p-4 bg-[#1A1A1A] rounded-lg border border-white/5 hover:border-[#D4AF37]/30 transition-all group">
                     <div className="flex items-center justify-between">
                       <p className="text-gray-300 font-medium group-hover:text-[#D4AF37] transition-colors">{modelo.nome}</p>

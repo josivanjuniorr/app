@@ -2,50 +2,42 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   LayoutDashboard, 
-  Smartphone, 
-  Package, 
+  Store, 
   Users, 
-  ShoppingCart, 
-  Receipt, 
   LogOut,
-  Store
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const Sidebar = ({ lojaSlug, lojaNome }) => {
+const AdminSidebar = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/admin/login");
   };
 
-  const basePath = `/${lojaSlug || user?.loja_slug}`;
-
   const menuItems = [
-    { path: basePath, icon: LayoutDashboard, label: "Início", end: true },
-    { path: `${basePath}/modelos`, icon: Smartphone, label: "Modelos" },
-    { path: `${basePath}/produtos`, icon: Package, label: "Produtos" },
-    { path: `${basePath}/clientes`, icon: Users, label: "Clientes" },
-    { path: `${basePath}/ponto-venda`, icon: ShoppingCart, label: "Ponto de Venda" },
-    { path: `${basePath}/vendas`, icon: Receipt, label: "Vendas" },
+    { path: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+    { path: "/admin/lojas", icon: Store, label: "Lojas" },
+    { path: "/admin/usuarios", icon: Users, label: "Usuários" },
   ];
 
   return (
     <aside 
       className="fixed left-0 top-0 h-screen w-64 bg-[#0F0F0F] border-r border-white/5 flex flex-col z-50"
-      data-testid="sidebar"
+      data-testid="admin-sidebar"
     >
       {/* Logo */}
       <div className="p-6 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#D4AF37] flex items-center justify-center">
-            <Store className="w-6 h-6 text-black" />
+          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white font-['Outfit']">{lojaNome || "CellControl"}</h1>
-            <p className="text-xs text-gray-500">Controle de Celulares</p>
+            <h1 className="text-lg font-bold text-white font-['Outfit']">CellControl</h1>
+            <p className="text-xs text-purple-400">Super Admin</p>
           </div>
         </div>
       </div>
@@ -57,12 +49,12 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
             key={item.path}
             to={item.path}
             end={item.end}
-            data-testid={`sidebar-link-${item.path.split('/').pop() || "home"}`}
+            data-testid={`admin-sidebar-link-${item.path.split('/').pop() || "dashboard"}`}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? "bg-[#D4AF37]/10 text-[#D4AF37] border-l-[3px] border-[#D4AF37]"
-                  : "text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5"
+                  ? "bg-purple-600/10 text-purple-400 border-l-[3px] border-purple-500"
+                  : "text-gray-400 hover:text-purple-400 hover:bg-purple-600/5"
               }`
             }
           >
@@ -76,7 +68,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
       <div className="p-4 border-t border-white/5">
         {user && (
           <div className="mb-3 px-4 py-2">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Logado como</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Super Admin</p>
             <p className="text-sm text-gray-300 truncate">{user.user_email}</p>
           </div>
         )}
@@ -84,7 +76,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
           onClick={handleLogout}
           variant="ghost"
           className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
-          data-testid="logout-button"
+          data-testid="admin-logout-button"
         >
           <LogOut className="w-5 h-5" />
           <span>Sair</span>
@@ -94,4 +86,4 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;
