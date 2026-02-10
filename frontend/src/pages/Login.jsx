@@ -1,21 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { API, useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, Eye, EyeOff } from "lucide-react";
+import { Store, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { login, token, user } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lojaNome, setLojaNome] = useState("");
 
   // Redirect if already logged in
   if (token && user) {
@@ -26,6 +28,15 @@ const Login = () => {
     }
     return null;
   }
+
+  // Fetch store name on mount
+  useState(() => {
+    if (slug) {
+      axios.get(`${API}/loja/${slug}/verify`)
+        .then(res => setLojaNome(res.data.nome))
+        .catch(() => navigate("/"));
+    }
+  }, [slug]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,15 +51,19 @@ const Login = () => {
       const response = await axios.post(`${API}/auth/login`, { email, senha });
       const { token: newToken, user_id, user_email, user_nome, role, loja_id, loja_slug } = response.data;
       
+      // Verify user belongs to this store
+      if (role !== "super_admin" && loja_slug !== slug) {
+        toast.error("Este usuário não pertence a esta loja");
+        return;
+      }
+      
       login(newToken, { user_id, user_email, user_nome, role, loja_id, loja_slug });
       toast.success("Login realizado com sucesso!");
       
       if (role === "super_admin") {
         navigate("/admin");
-      } else if (loja_slug) {
-        navigate(`/${loja_slug}`);
       } else {
-        toast.error("Usuário não vinculado a nenhuma loja");
+        navigate(`/${loja_slug}`);
       }
     } catch (error) {
       const message = error.response?.data?.detail || "Erro ao fazer login";
@@ -66,15 +81,23 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md">
         <Card className="bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
           <CardHeader className="text-center space-y-4 pb-6">
+            <button
+              onClick={() => navigate("/")}
+              className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors"
+              data-testid="btn-voltar"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            
             <div className="mx-auto w-16 h-16 rounded-2xl bg-[#D4AF37] flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)]">
               <Store className="w-8 h-8 text-black" />
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-white font-['Outfit']">
-                CellControl
+                {lojaNome || slug}
               </CardTitle>
               <CardDescription className="text-gray-400 mt-1">
-                Acesse sua loja
+                <span className="text-[#D4AF37]">/{slug}</span> • Faça login para continuar
               </CardDescription>
             </div>
           </CardHeader>
@@ -130,20 +153,11 @@ const Login = () => {
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
-
-            <div className="mt-6 text-center space-y-2">
-              <p className="text-xs text-gray-500">
-                Isaac Imports: admin@isaacimports.com / 123456
-              </p>
-              <a href="/admin/login" className="text-xs text-purple-400 hover:text-purple-300">
-                Acesso Super Admin →
-              </a>
-            </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-gray-600 text-xs mt-6">
-          CellControl © {new Date().getFullYear()} - Todos os direitos reservados
+          CellControl © {new Date().getFullYear()}
         </p>
       </div>
     </div>
