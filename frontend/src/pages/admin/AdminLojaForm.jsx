@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Store, ArrowLeft, Save } from "lucide-react";
+import { Store, ArrowLeft, Save, Image, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminLojaForm = () => {
@@ -17,6 +17,7 @@ const AdminLojaForm = () => {
 
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
@@ -32,6 +33,7 @@ const AdminLojaForm = () => {
       const response = await axios.get(`${API}/admin/lojas/${id}`);
       setNome(response.data.nome);
       setSlug(response.data.slug);
+      setLogoUrl(response.data.logo_url || "");
       setAtivo(response.data.ativo);
     } catch (error) {
       toast.error("Erro ao carregar loja");
@@ -73,10 +75,18 @@ const AdminLojaForm = () => {
     setLoading(true);
     try {
       if (isEditing) {
-        await axios.put(`${API}/admin/lojas/${id}`, { nome, ativo });
+        await axios.put(`${API}/admin/lojas/${id}`, { 
+          nome, 
+          ativo,
+          logo_url: logoUrl.trim() || null
+        });
         toast.success("Loja atualizada com sucesso!");
       } else {
-        await axios.post(`${API}/admin/lojas`, { nome, slug });
+        await axios.post(`${API}/admin/lojas`, { 
+          nome, 
+          slug,
+          logo_url: logoUrl.trim() || null
+        });
         toast.success("Loja criada com sucesso!");
       }
       navigate("/admin/lojas");
@@ -157,6 +167,52 @@ const AdminLojaForm = () => {
               <p className="text-xs text-gray-500">
                 URL de acesso: /{slug || "slug"}
               </p>
+            </div>
+
+            {/* Logo URL Field */}
+            <div className="space-y-2">
+              <Label htmlFor="logo" className="text-gray-300 flex items-center gap-2">
+                <Image className="w-4 h-4" />
+                Logo da Loja (URL)
+              </Label>
+              <Input
+                id="logo"
+                type="url"
+                placeholder="https://exemplo.com/logo.png"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                className="bg-[#0A0A0A] border-purple-500/20 text-white placeholder:text-gray-600 focus:border-purple-500"
+                data-testid="input-logo-loja"
+              />
+              <p className="text-xs text-gray-500">
+                Cole a URL de uma imagem (PNG, JPG) para usar como logo da loja
+              </p>
+              
+              {/* Logo Preview */}
+              {logoUrl && (
+                <div className="mt-3 p-4 bg-[#0A0A0A] rounded-lg border border-purple-500/20">
+                  <p className="text-xs text-gray-500 mb-2">Pré-visualização:</p>
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={logoUrl} 
+                      alt="Preview do logo" 
+                      className="w-16 h-16 rounded-lg object-cover border border-white/10"
+                      onError={(e) => {
+                        e.target.src = '';
+                        e.target.alt = 'Erro ao carregar imagem';
+                        e.target.className = 'w-16 h-16 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-xs text-red-400';
+                      }}
+                    />
+                    <div className="text-xs text-gray-400">
+                      <p>Esta imagem aparecerá:</p>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        <li>Na página de login</li>
+                        <li>Na barra lateral</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {isEditing && (
