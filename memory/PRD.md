@@ -18,7 +18,14 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 1. **Super Admin**: Cria lojas, gerencia usuários, vê estatísticas globais
 2. **Admin de Loja**: Gerencia estoque, clientes e realiza vendas na sua loja
 
-## Funcionalidades Implementadas (v2.0)
+## Funcionalidades Implementadas (v2.1)
+
+### Landing Page de Seleção de Loja ✅ (NOVO)
+- [x] Página inicial em `/` para inserir domínio da loja
+- [x] Validação de slug da loja via API `/api/loja/{slug}/verify`
+- [x] Redirecionamento para login da loja correta
+- [x] Acesso rápido ao painel Super Admin
+- [x] UI elegante e responsiva
 
 ### Painel Super Admin ✅
 - [x] Login separado em /admin/login
