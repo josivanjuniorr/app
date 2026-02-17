@@ -568,9 +568,10 @@ async def import_data(
     elif data_type == 'clientes':
         for i, record in enumerate(data):
             try:
+                old_id = str(record.get('id', '')).strip()
                 nome = record.get('nome', '').strip()
                 cpf = record.get('cpf', '').strip()
-                whatsapp = record.get('whatsapp', '').strip()
+                whatsapp = record.get('whatsapp', record.get('telefone', '')).strip()
                 email = record.get('email', '').strip()
                 endereco = record.get('endereco', '').strip()
                 
@@ -578,15 +579,25 @@ async def import_data(
                     errors.append(f"Linha {i+1}: Nome do cliente é obrigatório")
                     continue
                 
-                # Check if client already exists by CPF
+                # Check if client already exists by CPF or name
+                existing = None
                 if cpf:
                     existing = await db.clientes.find_one({"cpf": cpf, "loja_id": loja_id})
-                    if existing:
-                        details["skipped"].append(nome)
-                        continue
+                if not existing:
+                    existing = await db.clientes.find_one({
+                        "nome": {"$regex": f"^{re.escape(nome)}$", "$options": "i"},
+                        "loja_id": loja_id
+                    })
                 
+                if existing:
+                    if old_id:
+                        clientes_id_map[old_id] = existing["id"]
+                    details["skipped"].append(nome)
+                    continue
+                
+                new_id = str(uuid.uuid4())
                 cliente_doc = {
-                    "id": str(uuid.uuid4()),
+                    "id": new_id,
                     "nome": nome,
                     "cpf": cpf,
                     "whatsapp": whatsapp,
@@ -596,6 +607,10 @@ async def import_data(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 await db.clientes.insert_one(cliente_doc)
+                
+                if old_id:
+                    clientes_id_map[old_id] = new_id
+                
                 details["created"].append(nome)
                 imported += 1
             except Exception as e:
