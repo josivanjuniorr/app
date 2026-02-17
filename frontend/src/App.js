@@ -174,6 +174,11 @@ function AppContent() {
           <AdminLayout><AdminUsuarioForm /></AdminLayout>
         </ProtectedAdminRoute>
       } />
+      <Route path="/admin/importar" element={
+        <ProtectedAdminRoute>
+          <AdminLayout><AdminImport /></AdminLayout>
+        </ProtectedAdminRoute>
+      } />
       
       {/* Store Login Route */}
       <Route path="/:slug/login" element={<Login />} />
