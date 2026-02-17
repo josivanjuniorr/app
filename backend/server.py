@@ -184,11 +184,12 @@ class Cliente(ClienteBase):
 
 # Venda
 class VendaItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     produto_id: str
-    modelo_id: str
+    modelo_id: Optional[str] = None
     modelo_nome: str
-    cor: str
-    memoria: str
+    cor: Optional[str] = ""
+    memoria: Optional[str] = ""
     preco: float
 
 class VendaCreate(BaseModel):
