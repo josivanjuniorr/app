@@ -17,7 +17,8 @@ import {
   Smartphone,
   Users,
   Package,
-  ArrowLeft
+  ArrowLeft,
+  Receipt
 } from "lucide-react";
 import { toast } from "sonner";
 
