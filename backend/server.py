@@ -444,6 +444,226 @@ async def update_loja(loja_id: str, loja: LojaUpdate, payload: dict = Depends(re
     updated = await db.lojas.find_one({"id": loja_id}, {"_id": 0})
     return Loja(**updated)
 
+# ============== DATA IMPORT ==============
+
+class ImportResult(BaseModel):
+    success: bool
+    total_records: int
+    imported: int
+    errors: List[str]
+    details: dict
+
+@admin_router.post("/import/{loja_id}")
+async def import_data(
+    loja_id: str, 
+    file: UploadFile = File(...),
+    data_type: str = "auto",
+    payload: dict = Depends(require_super_admin)
+):
+    """
+    Import data for a store from CSV or JSON file.
+    data_type: 'modelos', 'produtos', 'clientes', 'vendas', or 'auto' (detect from file)
+    """
+    # Verify loja exists
+    loja = await db.lojas.find_one({"id": loja_id}, {"_id": 0})
+    if not loja:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    
+    # Read file content
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    # Parse file based on extension
+    try:
+        if filename.endswith('.json'):
+            data = json.loads(content.decode('utf-8'))
+            if not isinstance(data, list):
+                data = [data]
+        elif filename.endswith('.csv'):
+            import csv
+            import io
+            reader = csv.DictReader(io.StringIO(content.decode('utf-8')))
+            data = list(reader)
+        else:
+            raise HTTPException(status_code=400, detail="Formato não suportado. Use CSV ou JSON.")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao ler arquivo: {str(e)}")
+    
+    if not data:
+        raise HTTPException(status_code=400, detail="Arquivo vazio ou sem dados válidos")
+    
+    # Auto-detect data type from first record keys
+    if data_type == "auto":
+        first_record = data[0]
+        keys = set(first_record.keys())
+        
+        if 'imei' in keys or 'cor' in keys or 'memoria' in keys:
+            data_type = 'produtos'
+        elif 'cpf' in keys or 'whatsapp' in keys:
+            data_type = 'clientes'
+        elif 'marca' in keys or ('nome' in keys and len(keys) <= 4):
+            data_type = 'modelos'
+        elif 'valor_total' in keys or 'forma_pagamento' in keys:
+            data_type = 'vendas'
+        else:
+            raise HTTPException(status_code=400, detail="Não foi possível detectar o tipo de dados. Especifique manualmente.")
+    
+    errors = []
+    imported = 0
+    details = {"created": [], "skipped": []}
+    
+    # Import based on data type
+    if data_type == 'modelos':
+        for i, record in enumerate(data):
+            try:
+                nome = record.get('nome', '').strip()
+                marca = record.get('marca', '').strip()
+                
+                if not nome:
+                    errors.append(f"Linha {i+1}: Nome do modelo é obrigatório")
+                    continue
+                
+                # Check if model already exists
+                existing = await db.modelos.find_one({
+                    "nome": {"$regex": f"^{re.escape(nome)}$", "$options": "i"},
+                    "loja_id": loja_id
+                })
+                if existing:
+                    details["skipped"].append(nome)
+                    continue
+                
+                modelo_doc = {
+                    "id": str(uuid.uuid4()),
+                    "nome": nome,
+                    "marca": marca,
+                    "loja_id": loja_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.modelos.insert_one(modelo_doc)
+                details["created"].append(nome)
+                imported += 1
+            except Exception as e:
+                errors.append(f"Linha {i+1}: {str(e)}")
+    
+    elif data_type == 'clientes':
+        for i, record in enumerate(data):
+            try:
+                nome = record.get('nome', '').strip()
+                cpf = record.get('cpf', '').strip()
+                whatsapp = record.get('whatsapp', '').strip()
+                email = record.get('email', '').strip()
+                endereco = record.get('endereco', '').strip()
+                
+                if not nome:
+                    errors.append(f"Linha {i+1}: Nome do cliente é obrigatório")
+                    continue
+                
+                # Check if client already exists by CPF
+                if cpf:
+                    existing = await db.clientes.find_one({"cpf": cpf, "loja_id": loja_id})
+                    if existing:
+                        details["skipped"].append(nome)
+                        continue
+                
+                cliente_doc = {
+                    "id": str(uuid.uuid4()),
+                    "nome": nome,
+                    "cpf": cpf,
+                    "whatsapp": whatsapp,
+                    "email": email,
+                    "endereco": endereco,
+                    "loja_id": loja_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.clientes.insert_one(cliente_doc)
+                details["created"].append(nome)
+                imported += 1
+            except Exception as e:
+                errors.append(f"Linha {i+1}: {str(e)}")
+    
+    elif data_type == 'produtos':
+        # First, get or create models
+        modelos_cache = {}
+        existing_modelos = await db.modelos.find({"loja_id": loja_id}, {"_id": 0}).to_list(1000)
+        for m in existing_modelos:
+            modelos_cache[m["nome"].lower()] = m["id"]
+        
+        for i, record in enumerate(data):
+            try:
+                modelo_nome = record.get('modelo', record.get('modelo_nome', '')).strip()
+                cor = record.get('cor', '').strip()
+                memoria = record.get('memoria', '').strip()
+                bateria = record.get('bateria', record.get('saude_bateria', '')).strip()
+                imei = record.get('imei', '').strip()
+                preco = record.get('preco', record.get('valor', 0))
+                
+                if not modelo_nome:
+                    errors.append(f"Linha {i+1}: Modelo é obrigatório")
+                    continue
+                
+                # Get or create model
+                modelo_id = modelos_cache.get(modelo_nome.lower())
+                if not modelo_id:
+                    modelo_doc = {
+                        "id": str(uuid.uuid4()),
+                        "nome": modelo_nome,
+                        "marca": "",
+                        "loja_id": loja_id,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.modelos.insert_one(modelo_doc)
+                    modelo_id = modelo_doc["id"]
+                    modelos_cache[modelo_nome.lower()] = modelo_id
+                
+                # Check if product with same IMEI exists
+                if imei:
+                    existing = await db.produtos.find_one({"imei": imei, "loja_id": loja_id})
+                    if existing:
+                        details["skipped"].append(f"{modelo_nome} ({imei})")
+                        continue
+                
+                # Convert price to float
+                try:
+                    preco = float(str(preco).replace('R$', '').replace('.', '').replace(',', '.').strip())
+                except:
+                    preco = 0.0
+                
+                produto_doc = {
+                    "id": str(uuid.uuid4()),
+                    "modelo_id": modelo_id,
+                    "cor": cor,
+                    "memoria": memoria,
+                    "bateria": bateria,
+                    "imei": imei,
+                    "preco": preco,
+                    "vendido": False,
+                    "loja_id": loja_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.produtos.insert_one(produto_doc)
+                details["created"].append(f"{modelo_nome} ({cor})")
+                imported += 1
+            except Exception as e:
+                errors.append(f"Linha {i+1}: {str(e)}")
+    
+    else:
+        raise HTTPException(status_code=400, detail=f"Tipo de dados '{data_type}' não suportado para importação")
+    
+    return ImportResult(
+        success=len(errors) == 0,
+        total_records=len(data),
+        imported=imported,
+        errors=errors[:20],  # Limit errors to first 20
+        details={
+            "created_count": len(details["created"]),
+            "skipped_count": len(details["skipped"]),
+            "sample_created": details["created"][:10],
+            "sample_skipped": details["skipped"][:10]
+        }
+    )
+
 @admin_router.get("/usuarios", response_model=List[UsuarioResponse])
 async def list_usuarios(payload: dict = Depends(require_super_admin)):
     usuarios = await db.usuarios.find({}, {"_id": 0, "senha": 0}).to_list(1000)
