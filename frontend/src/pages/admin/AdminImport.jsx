@@ -118,6 +118,9 @@ const AdminImport = () => {
     } else if (type === 'produtos') {
       content = 'modelo,cor,memoria,bateria,imei,preco\niPhone 15,Preto,128GB,95%,123456789012345,4500.00';
       filename = 'template_produtos.csv';
+    } else if (type === 'vendas') {
+      content = 'cliente_nome,cliente_cpf,valor_total,forma_pagamento,data,modelo,cor,observacao\nJoão Silva,123.456.789-00,4500.00,pix,15/01/2025,iPhone 15,Preto,Venda importada';
+      filename = 'template_vendas.csv';
     }
     
     const blob = new Blob([content], { type: 'text/csv' });
