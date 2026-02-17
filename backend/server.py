@@ -837,41 +837,23 @@ async def import_data(
                 await db.vendas_concluidas.insert_one(venda_doc)
                 details["created"].append(f"R$ {valor_total:.2f} - {cliente_display}")
                 imported += 1
-                if isinstance(itens, str):
-                    try:
-                        itens = json.loads(itens)
-                    except:
-                        itens = []
-                
-                # If no items, create a generic item
-                if not itens:
-                    modelo_nome = record.get('modelo', record.get('produto', 'Produto Importado')).strip()
-                    itens = [{
-                        "produto_id": str(uuid.uuid4()),
-                        "modelo_nome": modelo_nome,
-                        "cor": record.get('cor', ''),
-                        "memoria": record.get('memoria', ''),
-                        "preco": valor_total
-                    }]
-                
-                venda_doc = {
-                    "id": str(uuid.uuid4()),
-                    "cliente_id": cliente_id,
-                    "itens": json.dumps(itens),
-                    "valor_total": valor_total,
-                    "forma_pagamento": forma_pagamento,
-                    "observacao": observacao,
-                    "data": data_venda.isoformat(),
-                    "loja_id": loja_id
-                }
-                await db.vendas_concluidas.insert_one(venda_doc)
-                details["created"].append(f"Venda R$ {valor_total:.2f} - {cliente_nome}")
-                imported += 1
             except Exception as e:
                 errors.append(f"Linha {i+1}: {str(e)}")
     
     else:
         raise HTTPException(status_code=400, detail=f"Tipo de dados '{data_type}' não suportado para importação")
+    
+    # Save ID mappings for future imports
+    await db.import_id_mappings.update_one(
+        {"loja_id": loja_id},
+        {"$set": {
+            "loja_id": loja_id,
+            "modelos": modelos_id_map,
+            "clientes": clientes_id_map,
+            "produtos": produtos_id_map
+        }},
+        upsert=True
+    )
     
     return ImportResult(
         success=len(errors) == 0,
