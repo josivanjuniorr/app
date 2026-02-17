@@ -703,66 +703,76 @@ async def import_data(
                 errors.append(f"Linha {i+1}: {str(e)}")
     
     elif data_type == 'vendas':
-        # Get clients and products cache
-        clientes_cache = {}
+        # Load clientes cache (by name and by old ID)
+        clientes_cache_by_name = {}
         existing_clientes = await db.clientes.find({"loja_id": loja_id}, {"_id": 0}).to_list(10000)
         for c in existing_clientes:
             if c.get("cpf"):
-                clientes_cache[c["cpf"]] = c["id"]
-            clientes_cache[c["nome"].lower()] = c["id"]
+                clientes_cache_by_name[c["cpf"]] = c["id"]
+            clientes_cache_by_name[c["nome"].lower()] = c["id"]
         
         for i, record in enumerate(data):
             try:
-                # Get cliente (by CPF or name)
+                old_cliente_id = str(record.get('cliente_id', '')).strip()
                 cliente_cpf = record.get('cliente_cpf', record.get('cpf', '')).strip()
                 cliente_nome = record.get('cliente_nome', record.get('cliente', '')).strip()
                 
+                # Try to get cliente_id from mapping or by CPF/name
                 cliente_id = None
-                if cliente_cpf:
-                    cliente_id = clientes_cache.get(cliente_cpf)
-                if not cliente_id and cliente_nome:
-                    cliente_id = clientes_cache.get(cliente_nome.lower())
                 
-                # If client doesn't exist, create one
+                # First try old_cliente_id mapping
+                if old_cliente_id and old_cliente_id in clientes_id_map:
+                    cliente_id = clientes_id_map[old_cliente_id]
+                
+                # Then try by CPF
+                if not cliente_id and cliente_cpf:
+                    cliente_id = clientes_cache_by_name.get(cliente_cpf)
+                
+                # Then try by name
                 if not cliente_id and cliente_nome:
-                    cliente_doc = {
-                        "id": str(uuid.uuid4()),
-                        "nome": cliente_nome,
-                        "cpf": cliente_cpf,
-                        "whatsapp": "",
-                        "email": "",
-                        "endereco": "",
-                        "loja_id": loja_id,
-                        "created_at": datetime.now(timezone.utc).isoformat()
-                    }
-                    await db.clientes.insert_one(cliente_doc)
-                    cliente_id = cliente_doc["id"]
-                    clientes_cache[cliente_nome.lower()] = cliente_id
-                    if cliente_cpf:
-                        clientes_cache[cliente_cpf] = cliente_id
+                    cliente_id = clientes_cache_by_name.get(cliente_nome.lower())
+                
+                # If still no cliente_id, check if we have old ID
+                if not cliente_id and old_cliente_id:
+                    errors.append(f"Linha {i+1}: Cliente ID {old_cliente_id} não encontrado. Importe clientes primeiro.")
+                    continue
                 
                 if not cliente_id:
-                    errors.append(f"Linha {i+1}: Cliente não encontrado")
+                    errors.append(f"Linha {i+1}: Cliente não identificado")
                     continue
+                
+                # Get cliente name for display
+                cliente_doc = await db.clientes.find_one({"id": cliente_id}, {"_id": 0})
+                cliente_display = cliente_doc["nome"] if cliente_doc else "?"
                 
                 # Parse value
                 valor_total = record.get('valor_total', record.get('total', 0))
                 try:
-                    valor_total = float(str(valor_total).replace('R$', '').replace('.', '').replace(',', '.').strip())
+                    valor_total = float(str(valor_total).replace('R$', '').replace(',', '.').strip())
                 except:
                     valor_total = 0.0
                 
-                # Parse date
+                # Parse date - support ISO format from database export
                 data_venda = record.get('data', record.get('data_venda', ''))
                 if data_venda:
                     try:
-                        # Try different date formats
-                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d']:
+                        data_str = str(data_venda).strip()
+                        # Try ISO format first (from database export)
+                        if 'T' in data_str or '+' in data_str or len(data_str) > 10:
+                            # ISO format: 2025-07-09 13:42:14.925264+00 or 2025-07-09T13:42:14
+                            data_str = data_str.split('+')[0].split('.')[0].replace('T', ' ')
                             try:
-                                data_venda = datetime.strptime(str(data_venda).strip(), fmt).replace(tzinfo=timezone.utc)
-                                break
+                                data_venda = datetime.strptime(data_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
                             except:
-                                continue
+                                data_venda = datetime.strptime(data_str.split(' ')[0], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                        else:
+                            # Try other formats
+                            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                                try:
+                                    data_venda = datetime.strptime(data_str, fmt).replace(tzinfo=timezone.utc)
+                                    break
+                                except:
+                                    continue
                         if isinstance(data_venda, str):
                             data_venda = datetime.now(timezone.utc)
                     except:
@@ -770,14 +780,63 @@ async def import_data(
                 else:
                     data_venda = datetime.now(timezone.utc)
                 
-                forma_pagamento = record.get('forma_pagamento', record.get('pagamento', 'dinheiro')).strip().lower()
-                if forma_pagamento not in ['dinheiro', 'pix', 'cartao_credito', 'cartao_debito', 'transferencia']:
-                    forma_pagamento = 'dinheiro'
+                # Parse forma_pagamento - support variations
+                forma_pagamento = record.get('forma_pagamento', record.get('pagamento', 'dinheiro')).strip()
+                forma_map = {
+                    'pix': 'pix', 'dinheiro': 'dinheiro', 'cartão': 'cartao_credito',
+                    'cartao': 'cartao_credito', 'credito': 'cartao_credito', 'débito': 'cartao_debito',
+                    'debito': 'cartao_debito', 'transferencia': 'transferencia', 'outra': 'dinheiro'
+                }
+                forma_pagamento = forma_map.get(forma_pagamento.lower(), 'dinheiro')
                 
                 observacao = record.get('observacao', record.get('obs', '')).strip()
                 
-                # Parse items (if provided as JSON string or separate columns)
-                itens = record.get('itens', '[]')
+                # Parse items - support JSON string from database export
+                itens_raw = record.get('itens', '[]')
+                itens = []
+                
+                if isinstance(itens_raw, str) and itens_raw.strip():
+                    try:
+                        # Clean up escaped JSON
+                        clean_json = itens_raw.strip().strip('"').replace('\\"', '"').replace('\\\\', '\\')
+                        parsed_itens = json.loads(clean_json)
+                        
+                        # Transform items to our format
+                        for item in parsed_itens:
+                            modelo_info = item.get('modelo', {})
+                            itens.append({
+                                "produto_id": str(item.get('id', uuid.uuid4())),
+                                "modelo_nome": modelo_info.get('nome', item.get('modelo_nome', 'Produto')),
+                                "cor": item.get('cor', ''),
+                                "memoria": str(item.get('memoria', '')),
+                                "preco": float(item.get('preco', 0))
+                            })
+                    except:
+                        pass
+                
+                # If no items parsed, create generic item
+                if not itens:
+                    itens = [{
+                        "produto_id": str(uuid.uuid4()),
+                        "modelo_nome": "Produto Importado",
+                        "cor": "",
+                        "memoria": "",
+                        "preco": valor_total
+                    }]
+                
+                venda_doc = {
+                    "id": str(uuid.uuid4()),
+                    "cliente_id": cliente_id,
+                    "itens": json.dumps(itens),
+                    "valor_total": valor_total,
+                    "forma_pagamento": forma_pagamento,
+                    "observacao": observacao,
+                    "data": data_venda.isoformat(),
+                    "loja_id": loja_id
+                }
+                await db.vendas_concluidas.insert_one(venda_doc)
+                details["created"].append(f"R$ {valor_total:.2f} - {cliente_display}")
+                imported += 1
                 if isinstance(itens, str):
                     try:
                         itens = json.loads(itens)
