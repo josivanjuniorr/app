@@ -648,6 +648,115 @@ async def import_data(
             except Exception as e:
                 errors.append(f"Linha {i+1}: {str(e)}")
     
+    elif data_type == 'vendas':
+        # Get clients and products cache
+        clientes_cache = {}
+        existing_clientes = await db.clientes.find({"loja_id": loja_id}, {"_id": 0}).to_list(10000)
+        for c in existing_clientes:
+            if c.get("cpf"):
+                clientes_cache[c["cpf"]] = c["id"]
+            clientes_cache[c["nome"].lower()] = c["id"]
+        
+        for i, record in enumerate(data):
+            try:
+                # Get cliente (by CPF or name)
+                cliente_cpf = record.get('cliente_cpf', record.get('cpf', '')).strip()
+                cliente_nome = record.get('cliente_nome', record.get('cliente', '')).strip()
+                
+                cliente_id = None
+                if cliente_cpf:
+                    cliente_id = clientes_cache.get(cliente_cpf)
+                if not cliente_id and cliente_nome:
+                    cliente_id = clientes_cache.get(cliente_nome.lower())
+                
+                # If client doesn't exist, create one
+                if not cliente_id and cliente_nome:
+                    cliente_doc = {
+                        "id": str(uuid.uuid4()),
+                        "nome": cliente_nome,
+                        "cpf": cliente_cpf,
+                        "whatsapp": "",
+                        "email": "",
+                        "endereco": "",
+                        "loja_id": loja_id,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    await db.clientes.insert_one(cliente_doc)
+                    cliente_id = cliente_doc["id"]
+                    clientes_cache[cliente_nome.lower()] = cliente_id
+                    if cliente_cpf:
+                        clientes_cache[cliente_cpf] = cliente_id
+                
+                if not cliente_id:
+                    errors.append(f"Linha {i+1}: Cliente não encontrado")
+                    continue
+                
+                # Parse value
+                valor_total = record.get('valor_total', record.get('total', 0))
+                try:
+                    valor_total = float(str(valor_total).replace('R$', '').replace('.', '').replace(',', '.').strip())
+                except:
+                    valor_total = 0.0
+                
+                # Parse date
+                data_venda = record.get('data', record.get('data_venda', ''))
+                if data_venda:
+                    try:
+                        # Try different date formats
+                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d']:
+                            try:
+                                data_venda = datetime.strptime(str(data_venda).strip(), fmt).replace(tzinfo=timezone.utc)
+                                break
+                            except:
+                                continue
+                        if isinstance(data_venda, str):
+                            data_venda = datetime.now(timezone.utc)
+                    except:
+                        data_venda = datetime.now(timezone.utc)
+                else:
+                    data_venda = datetime.now(timezone.utc)
+                
+                forma_pagamento = record.get('forma_pagamento', record.get('pagamento', 'dinheiro')).strip().lower()
+                if forma_pagamento not in ['dinheiro', 'pix', 'cartao_credito', 'cartao_debito', 'transferencia']:
+                    forma_pagamento = 'dinheiro'
+                
+                observacao = record.get('observacao', record.get('obs', '')).strip()
+                
+                # Parse items (if provided as JSON string or separate columns)
+                itens = record.get('itens', '[]')
+                if isinstance(itens, str):
+                    try:
+                        itens = json.loads(itens)
+                    except:
+                        itens = []
+                
+                # If no items, create a generic item
+                if not itens:
+                    modelo_nome = record.get('modelo', record.get('produto', 'Produto Importado')).strip()
+                    itens = [{
+                        "produto_id": str(uuid.uuid4()),
+                        "modelo_nome": modelo_nome,
+                        "cor": record.get('cor', ''),
+                        "memoria": record.get('memoria', ''),
+                        "preco": valor_total
+                    }]
+                
+                venda_doc = {
+                    "id": str(uuid.uuid4()),
+                    "cliente_id": cliente_id,
+                    "itens": json.dumps(itens),
+                    "valor_total": valor_total,
+                    "forma_pagamento": forma_pagamento,
+                    "observacao": observacao,
+                    "data": data_venda.isoformat(),
+                    "loja_id": loja_id
+                }
+                await db.vendas_concluidas.insert_one(venda_doc)
+                details["created"].append(f"Venda R$ {valor_total:.2f} - {cliente_nome}")
+                imported += 1
+            except Exception as e:
+                errors.append(f"Linha {i+1}: {str(e)}")
+    
     else:
         raise HTTPException(status_code=400, detail=f"Tipo de dados '{data_type}' não suportado para importação")
     
