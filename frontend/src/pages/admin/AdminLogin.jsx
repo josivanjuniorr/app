@@ -124,11 +124,8 @@ const AdminLogin = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-2">
-              <p className="text-xs text-gray-500">
-                superadmin@cellcontrol.com / admin123
-              </p>
-              <a href="/login" className="text-xs text-[#D4AF37] hover:text-[#B5952F]">
+            <div className="mt-6 text-center">
+              <a href="/" className="text-xs text-[#D4AF37] hover:text-[#B5952F]">
                 ← Voltar para login da loja
               </a>
             </div>
