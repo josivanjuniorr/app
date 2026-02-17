@@ -525,6 +525,7 @@ async def import_data(
     if data_type == 'modelos':
         for i, record in enumerate(data):
             try:
+                old_id = str(record.get('id', '')).strip()
                 nome = record.get('nome', '').strip()
                 marca = record.get('marca', '').strip()
                 
@@ -532,23 +533,33 @@ async def import_data(
                     errors.append(f"Linha {i+1}: Nome do modelo é obrigatório")
                     continue
                 
-                # Check if model already exists
+                # Check if model already exists by name
                 existing = await db.modelos.find_one({
                     "nome": {"$regex": f"^{re.escape(nome)}$", "$options": "i"},
                     "loja_id": loja_id
                 })
+                
                 if existing:
+                    # Map old ID to existing UUID
+                    if old_id:
+                        modelos_id_map[old_id] = existing["id"]
                     details["skipped"].append(nome)
                     continue
                 
+                new_id = str(uuid.uuid4())
                 modelo_doc = {
-                    "id": str(uuid.uuid4()),
+                    "id": new_id,
                     "nome": nome,
                     "marca": marca,
                     "loja_id": loja_id,
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 await db.modelos.insert_one(modelo_doc)
+                
+                # Save ID mapping
+                if old_id:
+                    modelos_id_map[old_id] = new_id
+                
                 details["created"].append(nome)
                 imported += 1
             except Exception as e:
