@@ -401,24 +401,51 @@ const AdminImport = () => {
 
           <Card className="bg-[#141414] border border-purple-500/20">
             <CardHeader>
+              <CardTitle className="text-white text-lg">Ordem de Importação</CardTitle>
+              <CardDescription className="text-gray-400">
+                Siga esta ordem para evitar erros
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3 p-2 bg-blue-500/10 rounded-lg">
+                <span className="w-6 h-6 rounded-full bg-blue-500 text-white text-sm flex items-center justify-center font-bold">1</span>
+                <span className="text-blue-400">Modelos</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 bg-purple-500/10 rounded-lg">
+                <span className="w-6 h-6 rounded-full bg-purple-500 text-white text-sm flex items-center justify-center font-bold">2</span>
+                <span className="text-purple-400">Clientes</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 bg-green-500/10 rounded-lg">
+                <span className="w-6 h-6 rounded-full bg-green-500 text-white text-sm flex items-center justify-center font-bold">3</span>
+                <span className="text-green-400">Produtos</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 bg-yellow-500/10 rounded-lg">
+                <span className="w-6 h-6 rounded-full bg-yellow-500 text-black text-sm flex items-center justify-center font-bold">4</span>
+                <span className="text-yellow-400">Vendas</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#141414] border border-purple-500/20">
+            <CardHeader>
               <CardTitle className="text-white text-lg">Formato dos Dados</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div>
                 <p className="text-blue-400 font-medium mb-1">Modelos:</p>
-                <p className="text-gray-400">nome, marca</p>
-              </div>
-              <div>
-                <p className="text-green-400 font-medium mb-1">Produtos:</p>
-                <p className="text-gray-400">modelo, cor, memoria, bateria, imei, preco</p>
+                <p className="text-gray-400">id, nome</p>
               </div>
               <div>
                 <p className="text-purple-400 font-medium mb-1">Clientes:</p>
-                <p className="text-gray-400">nome, cpf, whatsapp, email, endereco</p>
+                <p className="text-gray-400">id, nome, cpf, whatsapp, email, endereco</p>
+              </div>
+              <div>
+                <p className="text-green-400 font-medium mb-1">Produtos:</p>
+                <p className="text-gray-400">id, modelo_id, cor, memoria, bateria, imei, preco, vendido</p>
               </div>
               <div>
                 <p className="text-yellow-400 font-medium mb-1">Vendas:</p>
-                <p className="text-gray-400">cliente_nome, cliente_cpf, valor_total, forma_pagamento, data, modelo, observacao</p>
+                <p className="text-gray-400">id, data, itens, valor_total, cliente_id, forma_pagamento, observacao</p>
               </div>
             </CardContent>
           </Card>
