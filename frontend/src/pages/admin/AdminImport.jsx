@@ -416,6 +416,10 @@ const AdminImport = () => {
                 <p className="text-purple-400 font-medium mb-1">Clientes:</p>
                 <p className="text-gray-400">nome, cpf, whatsapp, email, endereco</p>
               </div>
+              <div>
+                <p className="text-yellow-400 font-medium mb-1">Vendas:</p>
+                <p className="text-gray-400">cliente_nome, cliente_cpf, valor_total, forma_pagamento, data, modelo, observacao</p>
+              </div>
             </CardContent>
           </Card>
         </div>
