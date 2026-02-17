@@ -215,6 +215,12 @@ const AdminImport = () => {
                         Clientes
                       </div>
                     </SelectItem>
+                    <SelectItem value="vendas">
+                      <div className="flex items-center gap-2">
+                        <Receipt className="w-4 h-4 text-yellow-400" />
+                        Vendas Concluídas
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
