@@ -386,6 +386,16 @@ const AdminImport = () => {
                 Template Clientes
                 <Download className="w-4 h-4 ml-auto" />
               </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/10"
+                onClick={() => downloadTemplate('vendas')}
+                data-testid="btn-template-vendas"
+              >
+                <Receipt className="w-4 h-4 mr-2" />
+                Template Vendas
+                <Download className="w-4 h-4 ml-auto" />
+              </Button>
             </CardContent>
           </Card>
 
