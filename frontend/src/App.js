@@ -29,6 +29,7 @@ import AdminLojas from "@/pages/admin/AdminLojas";
 import AdminLojaForm from "@/pages/admin/AdminLojaForm";
 import AdminUsuarios from "@/pages/admin/AdminUsuarios";
 import AdminUsuarioForm from "@/pages/admin/AdminUsuarioForm";
+import AdminImport from "@/pages/admin/AdminImport";
 
 // Components
 import Sidebar from "@/components/Sidebar";
