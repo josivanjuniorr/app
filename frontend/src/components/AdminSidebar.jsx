@@ -5,7 +5,8 @@ import {
   Store, 
   Users, 
   LogOut,
-  Shield
+  Shield,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +23,7 @@ const AdminSidebar = () => {
     { path: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { path: "/admin/lojas", icon: Store, label: "Lojas" },
     { path: "/admin/usuarios", icon: Users, label: "Usuários" },
+    { path: "/admin/importar", icon: Upload, label: "Importar Dados" },
   ];
 
   return (
