@@ -463,6 +463,7 @@ async def import_data(
     """
     Import data for a store from CSV or JSON file.
     data_type: 'modelos', 'produtos', 'clientes', 'vendas', or 'auto' (detect from file)
+    Supports mapping of old numeric IDs to new UUIDs.
     """
     # Verify loja exists
     loja = await db.lojas.find_one({"id": loja_id}, {"_id": 0})
@@ -499,20 +500,26 @@ async def import_data(
         first_record = data[0]
         keys = set(first_record.keys())
         
-        if 'imei' in keys or 'cor' in keys or 'memoria' in keys:
+        if 'imei' in keys or ('modelo_id' in keys and 'cor' in keys):
             data_type = 'produtos'
-        elif 'cpf' in keys or 'whatsapp' in keys:
+        elif 'cpf' in keys or 'whatsapp' in keys or 'telefone' in keys:
             data_type = 'clientes'
-        elif 'marca' in keys or ('nome' in keys and len(keys) <= 4):
+        elif ('nome' in keys and len(keys) <= 3) or (keys == {'id', 'nome'}):
             data_type = 'modelos'
-        elif 'valor_total' in keys or 'forma_pagamento' in keys:
+        elif 'valor_total' in keys or 'forma_pagamento' in keys or 'cliente_id' in keys:
             data_type = 'vendas'
         else:
             raise HTTPException(status_code=400, detail="Não foi possível detectar o tipo de dados. Especifique manualmente.")
     
     errors = []
     imported = 0
-    details = {"created": [], "skipped": []}
+    details = {"created": [], "skipped": [], "id_mappings": {}}
+    
+    # Load existing ID mappings for this store (stored in a special collection)
+    id_map_doc = await db.import_id_mappings.find_one({"loja_id": loja_id}) or {"loja_id": loja_id, "modelos": {}, "clientes": {}, "produtos": {}}
+    modelos_id_map = id_map_doc.get("modelos", {})
+    clientes_id_map = id_map_doc.get("clientes", {})
+    produtos_id_map = id_map_doc.get("produtos", {})
     
     # Import based on data type
     if data_type == 'modelos':
