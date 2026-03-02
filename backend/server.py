@@ -198,6 +198,7 @@ class VendaCreate(BaseModel):
     forma_pagamento: str
     observacao: Optional[str] = None
     garantia_meses: Optional[int] = None  # Warranty in months (0 = no warranty)
+    desconto: Optional[float] = None  # Discount value in BRL
 
 class VendaConcluida(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -206,6 +207,8 @@ class VendaConcluida(BaseModel):
     data: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     itens: str
     valor_total: float
+    subtotal: Optional[float] = None  # Total before discount
+    desconto: Optional[float] = None  # Discount value in BRL
     cliente_id: str
     forma_pagamento: str
     observacao: Optional[str] = None
@@ -1276,9 +1279,17 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
         from dateutil.relativedelta import relativedelta
         garantia_ate = (datetime.now(timezone.utc) + relativedelta(months=venda.garantia_meses)).isoformat()
     
+    # Apply discount
+    subtotal = valor_total
+    desconto = venda.desconto if venda.desconto and venda.desconto > 0 else None
+    if desconto:
+        valor_total = max(0, valor_total - desconto)  # Ensure total is not negative
+    
     venda_obj = VendaConcluida(
         loja_id=loja["id"],
         itens=json.dumps(itens),
+        subtotal=subtotal,
+        desconto=desconto,
         valor_total=valor_total,
         cliente_id=venda.cliente_id,
         forma_pagamento=venda.forma_pagamento,

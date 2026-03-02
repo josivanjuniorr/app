@@ -47,13 +47,14 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] CRUD de Modelos de celulares
 - [x] CRUD de Produtos (cor, memória, bateria, IMEI, preço)
 - [x] CRUD de Clientes (com máscaras de CPF e WhatsApp)
-- [x] Ponto de Venda completo com campo de garantia
+- [x] Ponto de Venda completo com campo de garantia e desconto
 - [x] Histórico de Vendas com paginação
 - [x] Impressão de comprovante de venda
 - [x] Edição de venda (forma de pagamento e observação)
 - [x] Exclusão de venda (com devolução de produtos ao estoque)
+- [x] Desconto em vendas (valor em R$, exibe subtotal/desconto/total)
 
-### Sistema de Garantias ✅ (NOVO - v2.2)
+### Sistema de Garantias ✅ (v2.2)
 - [x] Campo de garantia no Ponto de Venda (0, 1, 3, 6, 12 meses)
 - [x] Cálculo automático da data de vencimento da garantia
 - [x] Página dedicada de gestão de garantias (`/{slug}/garantias`)
@@ -63,6 +64,7 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] Busca por cliente ou produto
 - [x] Paginação na lista de garantias
 - [x] Status dinâmico calculado (ativa, vencida, vencendo)
+- [x] Exibição de garantia no detalhe da venda (período, status, data de vencimento)
 
 ### Paginação ✅
 - [x] Paginação na lista de Vendas
@@ -125,13 +127,16 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 
 ## Histórico de Implementação
 
-### 2026-03-02 - v2.2 Sistema de Garantias
+### 2026-03-02 - v2.2 Sistema de Garantias e Desconto
 - Campo de garantia no Ponto de Venda (0, 1, 3, 6, 12 meses)
 - Cálculo automático de data de vencimento usando `python-dateutil`
 - Nova página `/garantias` com estatísticas e gestão de garantias
 - Filtros por status (ativas, vencidas, todas)
 - Busca por cliente ou produto
 - Paginação e ordenação inteligente
+- Campo de desconto no Ponto de Venda (valor em R$)
+- Exibição de subtotal, desconto e total na venda
+- Exibição de garantia e desconto no detalhe da venda
 
 ### 2026-02-10 - v2.1 Landing Page + P1 Features
 - Landing page para seleção de loja (`/`)

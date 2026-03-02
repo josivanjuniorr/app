@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText, Edit, Trash2, X, Save } from "lucide-react";
+import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText, Edit, Trash2, X, Save, Shield, Percent } from "lucide-react";
 import { toast } from "sonner";
 
 const VendaDetail = () => {
@@ -100,7 +100,22 @@ const VendaDetail = () => {
 
   const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
   const formatDate = (d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatDateOnly = (d) => d ? new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-";
   const formatPayment = (p) => ({ 'dinheiro': 'Dinheiro', 'pix': 'PIX', 'cartao_credito': 'Cartão de Crédito', 'cartao_debito': 'Cartão de Débito', 'transferencia': 'Transferência' }[p] || p);
+  
+  const getGarantiaStatusBadge = (status) => {
+    if (!status || status === "sem_garantia") return null;
+    const styles = {
+      ativa: "bg-green-500/10 text-green-500 border-green-500/30",
+      vencida: "bg-red-500/10 text-red-500 border-red-500/30"
+    };
+    const labels = { ativa: "Ativa", vencida: "Vencida" };
+    return (
+      <span className={`px-2 py-1 text-xs font-semibold rounded border ${styles[status] || ""}`}>
+        {labels[status] || status}
+      </span>
+    );
+  };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="text-[#D4AF37]">Carregando...</div></div>;
   if (!venda) return <div className="flex items-center justify-center h-64"><div className="text-red-500">Venda não encontrada</div></div>;
@@ -182,6 +197,60 @@ const VendaDetail = () => {
           
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-[#D4AF37]" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Total</p><p className="text-[#D4AF37] font-bold text-lg">{formatCurrency(venda.valor_total)}</p></div></div></CardContent></Card>
         </div>
+
+        {/* Garantia e Desconto */}
+        {(venda.garantia_meses > 0 || venda.desconto > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Garantia */}
+            {venda.garantia_meses > 0 && (
+              <Card className="bg-[#141414] border border-blue-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Garantia</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-white font-medium">
+                          {venda.garantia_meses} {venda.garantia_meses === 1 ? "mês" : "meses"}
+                        </span>
+                        {getGarantiaStatusBadge(venda.garantia_status)}
+                      </div>
+                      {venda.garantia_ate && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Válida até: {formatDateOnly(venda.garantia_ate)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Desconto */}
+            {venda.desconto > 0 && (
+              <Card className="bg-[#141414] border border-green-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                      <Percent className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Desconto Aplicado</p>
+                      <p className="text-green-500 font-bold text-lg">-{formatCurrency(venda.desconto)}</p>
+                      {venda.subtotal && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Subtotal original: {formatCurrency(venda.subtotal)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         <Card className="bg-[#141414] border border-white/5 mb-6">
           <CardHeader className="border-b border-white/5"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Package className="w-5 h-5 text-blue-500" /></div><CardTitle className="text-lg font-semibold text-white">Itens da Venda</CardTitle></div></CardHeader>

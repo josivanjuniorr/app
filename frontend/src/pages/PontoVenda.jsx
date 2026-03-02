@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Search, User, Package, Plus, X, CreditCard, CheckCircle, Shield } from "lucide-react";
+import { ShoppingCart, Search, User, Package, Plus, X, CreditCard, CheckCircle, Shield, Percent } from "lucide-react";
 import { toast } from "sonner";
 
 const PontoVenda = () => {
@@ -28,6 +28,7 @@ const PontoVenda = () => {
   const [formaPagamento, setFormaPagamento] = useState("");
   const [observacao, setObservacao] = useState("");
   const [garantiaMeses, setGarantiaMeses] = useState("0");
+  const [desconto, setDesconto] = useState("");
 
   useEffect(() => { if (lojaSlug) fetchData(); }, [lojaSlug]);
 
@@ -64,6 +65,8 @@ const PontoVenda = () => {
   }, [clientes, searchCliente]);
 
   const total = useMemo(() => selectedProdutos.reduce((sum, p) => sum + p.preco, 0), [selectedProdutos]);
+  const descontoValue = useMemo(() => parseFloat(desconto) || 0, [desconto]);
+  const totalComDesconto = useMemo(() => Math.max(0, total - descontoValue), [total, descontoValue]);
 
   const handleSubmit = async () => {
     if (!selectedCliente) { toast.error("Selecione um cliente"); return; }
@@ -77,7 +80,8 @@ const PontoVenda = () => {
         produtos: selectedProdutos.map(p => p.id),
         forma_pagamento: formaPagamento,
         observacao: observacao || null,
-        garantia_meses: parseInt(garantiaMeses) || 0
+        garantia_meses: parseInt(garantiaMeses) || 0,
+        desconto: descontoValue > 0 ? descontoValue : null
       });
       toast.success("Venda finalizada com sucesso!");
       navigate(`/${lojaSlug}/vendas`);
@@ -184,10 +188,43 @@ const PontoVenda = () => {
                 </Select>
               </div>
               
+              {/* Campo de Desconto */}
+              <div className="space-y-2">
+                <Label className="text-gray-300 flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-green-400" />
+                  Desconto (R$)
+                </Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={desconto}
+                  onChange={(e) => setDesconto(e.target.value)}
+                  className="bg-[#0A0A0A] border-white/10 text-white"
+                  data-testid="input-desconto"
+                />
+              </div>
+              
               <div className="space-y-2"><Label className="text-gray-300">Observação</Label><Textarea placeholder="Observações..." value={observacao} onChange={(e) => setObservacao(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white min-h-[60px]" data-testid="input-observacao" /></div>
               
               <div className="pt-4 border-t border-white/10">
-                <div className="flex items-center justify-between mb-4"><span className="text-gray-400 uppercase text-sm tracking-wider">Total</span><span className="text-2xl font-bold text-[#D4AF37]" data-testid="total-value">{formatCurrency(total)}</span></div>
+                {descontoValue > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-sm">Subtotal</span>
+                      <span className="text-gray-400">{formatCurrency(total)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-500 text-sm">Desconto</span>
+                      <span className="text-green-500">-{formatCurrency(descontoValue)}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-gray-400 uppercase text-sm tracking-wider">Total</span>
+                  <span className="text-2xl font-bold text-[#D4AF37]" data-testid="total-value">{formatCurrency(totalComDesconto)}</span>
+                </div>
                 <Button onClick={handleSubmit} disabled={submitting || !selectedCliente || selectedProdutos.length === 0 || !formaPagamento} className="w-full h-12 bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F] disabled:opacity-50" data-testid="btn-finalizar-venda">
                   {submitting ? "Finalizando..." : <><CheckCircle className="w-5 h-5 mr-2" />Finalizar Venda</>}
                 </Button>
