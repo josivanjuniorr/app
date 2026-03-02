@@ -208,10 +208,13 @@ class VendaConcluida(BaseModel):
     cliente_id: str
     forma_pagamento: str
     observacao: Optional[str] = None
+    garantia_meses: Optional[int] = None  # Warranty in months
+    garantia_ate: Optional[str] = None  # Warranty end date (ISO string)
 
 class VendaConcluidaResponse(VendaConcluida):
     cliente_nome: Optional[str] = None
     itens_parsed: Optional[List[VendaItem]] = None
+    garantia_status: Optional[str] = None  # 'ativa', 'vencida', 'sem_garantia'
 
 # Dashboard
 class DashboardStats(BaseModel):
