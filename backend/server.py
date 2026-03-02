@@ -1255,13 +1255,21 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     for produto_id in venda.produtos:
         await db.produtos.update_one({"id": produto_id}, {"$set": {"vendido": True}})
     
+    # Calculate warranty end date
+    garantia_ate = None
+    if venda.garantia_meses and venda.garantia_meses > 0:
+        from dateutil.relativedelta import relativedelta
+        garantia_ate = (datetime.now(timezone.utc) + relativedelta(months=venda.garantia_meses)).isoformat()
+    
     venda_obj = VendaConcluida(
         loja_id=loja["id"],
         itens=json.dumps(itens),
         valor_total=valor_total,
         cliente_id=venda.cliente_id,
         forma_pagamento=venda.forma_pagamento,
-        observacao=venda.observacao
+        observacao=venda.observacao,
+        garantia_meses=venda.garantia_meses,
+        garantia_ate=garantia_ate
     )
     
     doc = venda_obj.model_dump()
