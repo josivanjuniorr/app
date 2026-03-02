@@ -18,9 +18,9 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 1. **Super Admin**: Cria lojas, gerencia usuários, vê estatísticas globais
 2. **Admin de Loja**: Gerencia estoque, clientes e realiza vendas na sua loja
 
-## Funcionalidades Implementadas (v2.1)
+## Funcionalidades Implementadas (v2.2)
 
-### Landing Page de Seleção de Loja ✅ (NOVO)
+### Landing Page de Seleção de Loja ✅
 - [x] Página inicial em `/` para inserir domínio da loja
 - [x] Validação de slug da loja via API `/api/loja/{slug}/verify`
 - [x] Redirecionamento para login da loja correta
@@ -33,6 +33,8 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] CRUD de Lojas (criar, ativar/desativar)
 - [x] CRUD de Usuários (criar admin para cada loja)
 - [x] Visualização de performance por loja
+- [x] Upload de logo personalizado para lojas (URL ou arquivo)
+- [x] Ferramenta de importação de dados (CSV)
 
 ### Autenticação Multi-Tenant ✅
 - [x] JWT com role (super_admin, loja_admin)
@@ -45,11 +47,29 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] CRUD de Modelos de celulares
 - [x] CRUD de Produtos (cor, memória, bateria, IMEI, preço)
 - [x] CRUD de Clientes (com máscaras de CPF e WhatsApp)
-- [x] Ponto de Venda completo
-- [x] Histórico de Vendas
+- [x] Ponto de Venda completo com campo de garantia
+- [x] Histórico de Vendas com paginação
 - [x] Impressão de comprovante de venda
 - [x] Edição de venda (forma de pagamento e observação)
 - [x] Exclusão de venda (com devolução de produtos ao estoque)
+
+### Sistema de Garantias ✅ (NOVO - v2.2)
+- [x] Campo de garantia no Ponto de Venda (0, 1, 3, 6, 12 meses)
+- [x] Cálculo automático da data de vencimento da garantia
+- [x] Página dedicada de gestão de garantias (`/{slug}/garantias`)
+- [x] Cards de estatísticas (Ativas, Vencendo em 30 dias, Vencidas)
+- [x] Filtros por tabs (Ativas, Vencidas, Todas)
+- [x] Tabela com cliente, produto, data da venda, período de garantia, vencimento e status
+- [x] Busca por cliente ou produto
+- [x] Paginação na lista de garantias
+- [x] Status dinâmico calculado (ativa, vencida, vencendo)
+
+### Paginação ✅
+- [x] Paginação na lista de Vendas
+- [x] Paginação na lista de Clientes
+- [x] Paginação na lista de Produtos
+- [x] Paginação na lista de Modelos
+- [x] Componente reutilizável de paginação
 
 ## Design System
 - **Super Admin**: Paleta roxa (#9333EA)
@@ -69,11 +89,11 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 
 ### Super Admin
 - **URL**: /admin/login
-- **Email**: superadmin@cellcontrol.com
-- **Senha**: admin123
+- **Email**: jjunyorj@gmail.com
+- **Senha**: Control2@
 
 ### Isaac Imports (Loja Exemplo)
-- **URL**: /login -> /isaacimports
+- **URL**: / → inserir "isaacimports" → /isaacimports/login
 - **Email**: admin@isaacimports.com
 - **Senha**: 123456
 
@@ -86,12 +106,14 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 ### P1 (Alta Prioridade)
 - [x] Máscaras de input para CPF e WhatsApp nos formulários de clientes ✅
 - [x] Funcionalidade de "Imprimir" na página de detalhes de vendas ✅
-- [ ] Relatórios de vendas por período
+- [x] Sistema de Garantias ✅
+- [x] Paginação em todas as listas ✅
+- [ ] Dashboard com relatórios e gráficos de vendas
 - [ ] Exportação de dados (CSV/Excel)
 - [ ] Notificações de estoque baixo
 
 ### P2 (Média Prioridade)
-- [ ] Múltiplos usuários por loja (vendedor, gerente)
+- [ ] Múltiplos usuários por loja (vendedor, gerente com permissões)
 - [ ] Dashboard com gráficos
 - [ ] Integração WhatsApp Business
 
@@ -99,8 +121,17 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [ ] App mobile (PWA)
 - [ ] Sistema de promoções/descontos
 - [ ] API pública para integrações
+- [ ] Sistema de assinatura/cobrança para lojas
 
 ## Histórico de Implementação
+
+### 2026-03-02 - v2.2 Sistema de Garantias
+- Campo de garantia no Ponto de Venda (0, 1, 3, 6, 12 meses)
+- Cálculo automático de data de vencimento usando `python-dateutil`
+- Nova página `/garantias` com estatísticas e gestão de garantias
+- Filtros por status (ativas, vencidas, todas)
+- Busca por cliente ou produto
+- Paginação e ordenação inteligente
 
 ### 2026-02-10 - v2.1 Landing Page + P1 Features
 - Landing page para seleção de loja (`/`)
@@ -129,6 +160,8 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - **Login Admin**: /admin/login
 - **Dashboard Admin**: /admin
 - **Dashboard Loja**: /{slug}
+- **Garantias**: /{slug}/garantias
+- **Ponto de Venda**: /{slug}/ponto-venda
 - **API Base**: /api
 - **API Admin**: /api/admin/*
 - **API Loja**: /api/loja/{slug}/*
