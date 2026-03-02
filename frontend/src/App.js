@@ -21,6 +21,7 @@ import ClienteForm from "@/pages/ClienteForm";
 import PontoVenda from "@/pages/PontoVenda";
 import Vendas from "@/pages/Vendas";
 import VendaDetail from "@/pages/VendaDetail";
+import Garantias from "@/pages/Garantias";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
