@@ -1307,11 +1307,13 @@ async def get_venda(slug: str, venda_id: str, payload: dict = Depends(require_lo
     cliente = await db.clientes.find_one({"id": venda["cliente_id"]}, {"_id": 0})
     cliente_nome = cliente["nome"] if cliente else "Cliente removido"
     itens_parsed = json.loads(venda.get("itens", "[]"))
+    garantia_status = get_garantia_status(venda.get("garantia_ate"))
     
     return VendaConcluidaResponse(
         **venda,
         cliente_nome=cliente_nome,
-        itens_parsed=[VendaItem(**item) for item in itens_parsed]
+        itens_parsed=[VendaItem(**item) for item in itens_parsed],
+        garantia_status=garantia_status
     )
 
 # Update Venda (only observacao and forma_pagamento can be updated)
