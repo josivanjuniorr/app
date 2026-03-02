@@ -1198,20 +1198,35 @@ async def delete_cliente(slug: str, cliente_id: str, payload: dict = Depends(req
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
     return {"message": "Cliente excluído com sucesso"}
 
+# Helper function to calculate warranty status
+def get_garantia_status(garantia_ate: Optional[str]) -> str:
+    if not garantia_ate:
+        return "sem_garantia"
+    try:
+        garantia_date = datetime.fromisoformat(garantia_ate.replace('Z', '+00:00'))
+        if garantia_date > datetime.now(timezone.utc):
+            return "ativa"
+        else:
+            return "vencida"
+    except:
+        return "sem_garantia"
+
 # Vendas
 @loja_router.get("/{slug}/vendas", response_model=List[VendaConcluidaResponse])
 async def list_vendas(slug: str, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
-    vendas = await db.vendas_concluidas.find({"loja_id": loja["id"]}, {"_id": 0}).to_list(1000)
+    vendas = await db.vendas_concluidas.find({"loja_id": loja["id"]}, {"_id": 0}).to_list(10000)
     result = []
     for venda in vendas:
         cliente = await db.clientes.find_one({"id": venda["cliente_id"]}, {"_id": 0})
         cliente_nome = cliente["nome"] if cliente else "Cliente removido"
         itens_parsed = json.loads(venda.get("itens", "[]"))
+        garantia_status = get_garantia_status(venda.get("garantia_ate"))
         result.append(VendaConcluidaResponse(
             **venda,
             cliente_nome=cliente_nome,
-            itens_parsed=[VendaItem(**item) for item in itens_parsed]
+            itens_parsed=[VendaItem(**item) for item in itens_parsed],
+            garantia_status=garantia_status
         ))
     return result
 
