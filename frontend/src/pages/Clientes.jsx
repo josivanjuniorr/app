@@ -9,6 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Users, Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/Pagination";
+
+const ITEMS_PER_PAGE = 15;
 
 const Clientes = () => {
   const { slug } = useParams();
@@ -19,8 +22,10 @@ const Clientes = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => { if (lojaSlug) fetchClientes(); }, [lojaSlug]);
+  useEffect(() => { setCurrentPage(1); }, [search]);
 
   const fetchClientes = async () => {
     try {
@@ -47,18 +52,31 @@ const Clientes = () => {
   };
 
   const formatCPF = (cpf) => {
+    if (!cpf) return "-";
     const c = cpf.replace(/\D/g, '');
     return c.length === 11 ? c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : cpf;
   };
 
   const formatPhone = (phone) => {
+    if (!phone) return "-";
     const c = phone.replace(/\D/g, '');
     if (c.length === 11) return c.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     if (c.length === 10) return c.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     return phone;
   };
 
-  const filteredClientes = clientes.filter((c) => c.nome.toLowerCase().includes(search.toLowerCase()) || c.cpf.includes(search) || c.whatsapp.includes(search));
+  const filteredClientes = clientes.filter((c) => 
+    c.nome?.toLowerCase().includes(search.toLowerCase()) || 
+    c.cpf?.includes(search) || 
+    c.whatsapp?.includes(search)
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredClientes.length / ITEMS_PER_PAGE);
+  const paginatedClientes = filteredClientes.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="text-[#D4AF37]">Carregando...</div></div>;
 
@@ -67,55 +85,97 @@ const Clientes = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><Users className="w-5 h-5 text-green-500" /></div>
-          <div><h1 className="text-2xl font-bold text-white font-['Outfit']">Clientes</h1><p className="text-sm text-gray-400">Gerencie seus clientes</p></div>
+          <div>
+            <h1 className="text-2xl font-bold text-white font-['Outfit']">Clientes</h1>
+            <p className="text-sm text-gray-400">{filteredClientes.length} clientes encontrados</p>
+          </div>
         </div>
-        <Link to={`/${lojaSlug}/clientes/novo`}><Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-novo-cliente"><Plus className="w-4 h-4 mr-2" />Novo Cliente</Button></Link>
+        <Link to={`/${lojaSlug}/clientes/novo`}>
+          <Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-novo-cliente">
+            <Plus className="w-4 h-4 mr-2" />Novo Cliente
+          </Button>
+        </Link>
       </div>
 
       <Card className="bg-[#141414] border border-white/5">
         <CardContent className="p-4">
-          <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" /><Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-[#0A0A0A] border-white/10 text-white" data-testid="search-cliente" /></div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input 
+              placeholder="Buscar por nome, CPF ou WhatsApp..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              className="pl-10 bg-[#0A0A0A] border-white/10 text-white" 
+              data-testid="search-cliente" 
+            />
+          </div>
         </CardContent>
       </Card>
 
       <Card className="bg-[#141414] border border-white/5">
         <CardContent className="p-0">
-          {filteredClientes.length > 0 ? (
-            <Table>
-              <TableHeader><TableRow className="border-white/5 hover:bg-transparent">
-                <TableHead className="text-gray-400 uppercase text-xs">Nome</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs">CPF</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs">WhatsApp</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs">Email</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {filteredClientes.map((cliente) => (
-                  <TableRow key={cliente.id} className="border-white/5 hover:bg-white/5">
-                    <TableCell className="text-gray-300 font-medium">{cliente.nome}</TableCell>
-                    <TableCell className="text-gray-400 font-mono text-sm">{formatCPF(cliente.cpf)}</TableCell>
-                    <TableCell className="text-gray-400">{formatPhone(cliente.whatsapp)}</TableCell>
-                    <TableCell className="text-gray-400">{cliente.email || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link to={`/${lojaSlug}/clientes/editar/${cliente.id}`}><Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"><Edit className="w-4 h-4" /></Button></Link>
-                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-red-400 hover:bg-red-400/10" onClick={() => setDeleteId(cliente.id)}><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </TableCell>
+          {paginatedClientes.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableHead className="text-gray-400 uppercase text-xs">Nome</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">CPF</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">WhatsApp</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">Email</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedClientes.map((cliente) => (
+                    <TableRow key={cliente.id} className="border-white/5 hover:bg-white/5">
+                      <TableCell className="text-gray-300 font-medium">{cliente.nome}</TableCell>
+                      <TableCell className="text-gray-400 font-mono text-sm">{formatCPF(cliente.cpf)}</TableCell>
+                      <TableCell className="text-gray-400">{formatPhone(cliente.whatsapp)}</TableCell>
+                      <TableCell className="text-gray-400">{cliente.email || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link to={`/${lojaSlug}/clientes/editar/${cliente.id}`}>
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-red-400 hover:bg-red-400/10" onClick={() => setDeleteId(cliente.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredClientes.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           ) : (
-            <div className="p-12 text-center"><Users className="w-12 h-12 text-gray-600 mx-auto mb-4" /><p className="text-gray-500">Nenhum cliente encontrado</p></div>
+            <div className="p-12 text-center">
+              <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500">Nenhum cliente encontrado</p>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-[#141414] border border-white/10">
-          <AlertDialogHeader><AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle><AlertDialogDescription className="text-gray-400">Tem certeza?</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="bg-white/5 border-white/10 text-gray-300">Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-red-500 text-white hover:bg-red-600">Excluir</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">Tem certeza que deseja excluir este cliente?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-gray-300">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 text-white hover:bg-red-600">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
