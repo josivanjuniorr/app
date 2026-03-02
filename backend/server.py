@@ -197,6 +197,7 @@ class VendaCreate(BaseModel):
     produtos: List[str]
     forma_pagamento: str
     observacao: Optional[str] = None
+    garantia_meses: Optional[int] = None  # Warranty in months (0 = no warranty)
 
 class VendaConcluida(BaseModel):
     model_config = ConfigDict(extra="ignore")
