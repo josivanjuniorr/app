@@ -255,6 +255,11 @@ function AppContent() {
           <StoreLayout><VendaDetail /></StoreLayout>
         </ProtectedStoreRoute>
       } />
+      <Route path="/:slug/garantias" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Garantias /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
       
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
