@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Search, User, Package, Plus, X, CreditCard, CheckCircle } from "lucide-react";
+import { ShoppingCart, Search, User, Package, Plus, X, CreditCard, CheckCircle, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 const PontoVenda = () => {
@@ -27,6 +27,7 @@ const PontoVenda = () => {
   const [selectedProdutos, setSelectedProdutos] = useState([]);
   const [formaPagamento, setFormaPagamento] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [garantiaMeses, setGarantiaMeses] = useState("0");
 
   useEffect(() => { if (lojaSlug) fetchData(); }, [lojaSlug]);
 
@@ -75,7 +76,8 @@ const PontoVenda = () => {
         cliente_id: selectedCliente.id,
         produtos: selectedProdutos.map(p => p.id),
         forma_pagamento: formaPagamento,
-        observacao: observacao || null
+        observacao: observacao || null,
+        garantia_meses: parseInt(garantiaMeses) || 0
       });
       toast.success("Venda finalizada com sucesso!");
       navigate(`/${lojaSlug}/vendas`);
@@ -135,7 +137,7 @@ const PontoVenda = () => {
             <CardHeader className="border-b border-white/5 py-4"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><ShoppingCart className="w-5 h-5 text-[#D4AF37]" /><CardTitle className="text-base font-semibold text-white">Carrinho</CardTitle></div><span className="px-2 py-1 bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-semibold rounded">{selectedProdutos.length} itens</span></div></CardHeader>
             <CardContent className="p-4">
               {selectedProdutos.length > 0 ? (
-                <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {selectedProdutos.map((p) => (
                     <div key={p.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
                       <div className="flex-1 min-w-0"><p className="text-white font-medium truncate">{p.modelo_nome}</p><p className="text-sm text-gray-400 truncate">{p.cor} • {p.memoria}</p></div>
@@ -161,7 +163,29 @@ const PontoVenda = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Campo de Garantia */}
+              <div className="space-y-2">
+                <Label className="text-gray-300 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-400" />
+                  Garantia
+                </Label>
+                <Select value={garantiaMeses} onValueChange={setGarantiaMeses}>
+                  <SelectTrigger className="bg-[#0A0A0A] border-white/10 text-white" data-testid="select-garantia">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#141414] border-white/10">
+                    <SelectItem value="0" className="text-gray-300">Sem garantia</SelectItem>
+                    <SelectItem value="1" className="text-gray-300">1 mês</SelectItem>
+                    <SelectItem value="3" className="text-gray-300">3 meses</SelectItem>
+                    <SelectItem value="6" className="text-gray-300">6 meses</SelectItem>
+                    <SelectItem value="12" className="text-gray-300">12 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="space-y-2"><Label className="text-gray-300">Observação</Label><Textarea placeholder="Observações..." value={observacao} onChange={(e) => setObservacao(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white min-h-[60px]" data-testid="input-observacao" /></div>
+              
               <div className="pt-4 border-t border-white/10">
                 <div className="flex items-center justify-between mb-4"><span className="text-gray-400 uppercase text-sm tracking-wider">Total</span><span className="text-2xl font-bold text-[#D4AF37]" data-testid="total-value">{formatCurrency(total)}</span></div>
                 <Button onClick={handleSubmit} disabled={submitting || !selectedCliente || selectedProdutos.length === 0 || !formaPagamento} className="w-full h-12 bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F] disabled:opacity-50" data-testid="btn-finalizar-venda">
