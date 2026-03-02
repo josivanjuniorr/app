@@ -10,7 +10,8 @@ import {
   ShoppingCart, 
   Receipt, 
   LogOut,
-  Store
+  Store,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
