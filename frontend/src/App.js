@@ -113,7 +113,7 @@ const StoreLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex">
       <Sidebar lojaSlug={slug} lojaNome={user?.loja_nome} />
-      <main className="flex-1 ml-64 p-6 md:p-8 lg:p-12">
+      <main className="flex-1 md:ml-64 ml-0 pt-16 md:pt-0 p-4 md:p-6 lg:p-8 xl:p-12">
         {children}
       </main>
     </div>
@@ -125,7 +125,7 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex">
       <AdminSidebar />
-      <main className="flex-1 ml-64 p-6 md:p-8 lg:p-12">
+      <main className="flex-1 md:ml-64 ml-0 pt-16 md:pt-0 p-4 md:p-6 lg:p-8 xl:p-12">
         {children}
       </main>
     </div>

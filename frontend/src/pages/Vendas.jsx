@@ -135,51 +135,53 @@ const Vendas = () => {
         <CardContent className="p-0">
           {paginatedVendas.length > 0 ? (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead onClick={() => handleSort("data")} className="cursor-pointer text-gray-400 uppercase text-xs">
-                      <div className="flex items-center gap-2">Data {renderSortIcon("data")}</div>
-                    </TableHead>
-                    <TableHead onClick={() => handleSort("cliente")} className="cursor-pointer text-gray-400 uppercase text-xs">
-                      <div className="flex items-center gap-2">Cliente {renderSortIcon("cliente")}</div>
-                    </TableHead>
-                    <TableHead className="text-gray-400 uppercase text-xs">Itens</TableHead>
-                    <TableHead className="text-gray-400 uppercase text-xs">Pagamento</TableHead>
-                    <TableHead onClick={() => handleSort("valor")} className="cursor-pointer text-gray-400 uppercase text-xs">
-                      <div className="flex items-center gap-2">Valor {renderSortIcon("valor")}</div>
-                    </TableHead>
-                    <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedVendas.map((venda) => (
-                    <TableRow key={venda.id} className="border-white/5 hover:bg-white/5">
-                      <TableCell className="text-gray-400">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-500" />
-                          {formatDate(venda.data)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-300 font-medium">{venda.cliente_nome}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-xs font-semibold rounded">
-                          {venda.itens_parsed?.length || 0} produtos
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-gray-400">{formatPayment(venda.forma_pagamento)}</TableCell>
-                      <TableCell className="text-[#D4AF37] font-semibold">{formatCurrency(venda.valor_total)}</TableCell>
-                      <TableCell className="text-right">
-                        <Link to={`/${lojaSlug}/vendas/${venda.id}`}>
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10" data-testid={`btn-view-${venda.id}`}>
-                            <Eye className="w-4 h-4 mr-1" />Ver
-                          </Button>
-                        </Link>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/5 hover:bg-transparent">
+                      <TableHead onClick={() => handleSort("data")} className="cursor-pointer text-gray-400 uppercase text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-2">Data {renderSortIcon("data")}</div>
+                      </TableHead>
+                      <TableHead onClick={() => handleSort("cliente")} className="cursor-pointer text-gray-400 uppercase text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-2">Cliente {renderSortIcon("cliente")}</div>
+                      </TableHead>
+                      <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Itens</TableHead>
+                      <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap hidden sm:table-cell">Pagamento</TableHead>
+                      <TableHead onClick={() => handleSort("valor")} className="cursor-pointer text-gray-400 uppercase text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-2">Valor {renderSortIcon("valor")}</div>
+                      </TableHead>
+                      <TableHead className="text-gray-400 uppercase text-xs text-right whitespace-nowrap">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedVendas.map((venda) => (
+                      <TableRow key={venda.id} className="border-white/5 hover:bg-white/5">
+                        <TableCell className="text-gray-400 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-500 hidden sm:block" />
+                            {formatDate(venda.data)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-gray-300 font-medium whitespace-nowrap">{venda.cliente_nome}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-xs font-semibold rounded">
+                            {venda.itens_parsed?.length || 0} produtos
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-gray-400 whitespace-nowrap hidden sm:table-cell">{formatPayment(venda.forma_pagamento)}</TableCell>
+                        <TableCell className="text-[#D4AF37] font-semibold whitespace-nowrap">{formatCurrency(venda.valor_total)}</TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Link to={`/${lojaSlug}/vendas/${venda.id}`}>
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10" data-testid={`btn-view-${venda.id}`}>
+                              <Eye className="w-4 h-4 sm:mr-1" /><span className="hidden sm:inline">Ver</span>
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

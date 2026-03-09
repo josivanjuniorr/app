@@ -11,7 +11,9 @@ import {
   Receipt, 
   LogOut,
   Store,
-  Shield
+  Shield,
+  Menu,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,12 +24,18 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
   const currentSlug = lojaSlug || slug || user?.loja_slug;
   
   const [lojaInfo, setLojaInfo] = useState({ nome: lojaNome, logo_url: null });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (currentSlug) {
       fetchLojaInfo();
     }
   }, [currentSlug]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [window.location.pathname]);
 
   const fetchLojaInfo = async () => {
     try {
@@ -58,19 +66,20 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
     { path: `${basePath}/garantias`, icon: Shield, label: "Garantias" },
   ];
 
+  const handleNavClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <aside 
-      className="fixed left-0 top-0 h-screen w-64 bg-[#0F0F0F] border-r border-white/5 flex flex-col z-50"
-      data-testid="sidebar"
-    >
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
+    <>
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0F0F0F] border-b border-white/5 flex items-center justify-between px-4 z-50">
         <div className="flex items-center gap-3">
           {lojaInfo.logo_url ? (
             <img 
               src={lojaInfo.logo_url.startsWith('/api') ? `${API.replace('/api', '')}${lojaInfo.logo_url}` : lojaInfo.logo_url} 
               alt={lojaInfo.nome || "Logo"} 
-              className="w-10 h-10 rounded-lg object-cover"
+              className="w-8 h-8 rounded-lg object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -78,58 +87,116 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
             />
           ) : null}
           <div 
-            className={`w-10 h-10 rounded-lg bg-[#D4AF37] items-center justify-center ${lojaInfo.logo_url ? 'hidden' : 'flex'}`}
+            className={`w-8 h-8 rounded-lg bg-[#D4AF37] items-center justify-center ${lojaInfo.logo_url ? 'hidden' : 'flex'}`}
           >
-            <Store className="w-6 h-6 text-black" />
+            <Store className="w-5 h-5 text-black" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white font-['Outfit']">{lojaInfo.nome || lojaNome || "CellControl"}</h1>
-            <p className="text-xs text-gray-500">Controle de Celulares</p>
+          <span className="text-white font-semibold font-['Outfit'] truncate max-w-[150px]">
+            {lojaInfo.nome || lojaNome || "CellControl"}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="text-white hover:bg-white/10"
+          data-testid="mobile-menu-toggle"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </Button>
+      </header>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop always visible, Mobile toggleable */}
+      <aside 
+        className={`
+          fixed left-0 top-0 h-screen w-64 bg-[#0F0F0F] border-r border-white/5 flex flex-col z-50
+          transition-transform duration-300 ease-in-out
+          md:translate-x-0
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:top-0
+          top-16
+          md:h-screen
+          h-[calc(100vh-4rem)]
+        `}
+        data-testid="sidebar"
+      >
+        {/* Logo - Only visible on desktop */}
+        <div className="hidden md:block p-6 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            {lojaInfo.logo_url ? (
+              <img 
+                src={lojaInfo.logo_url.startsWith('/api') ? `${API.replace('/api', '')}${lojaInfo.logo_url}` : lojaInfo.logo_url} 
+                alt={lojaInfo.nome || "Logo"} 
+                className="w-10 h-10 rounded-lg object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`w-10 h-10 rounded-lg bg-[#D4AF37] items-center justify-center ${lojaInfo.logo_url ? 'hidden' : 'flex'}`}
+            >
+              <Store className="w-6 h-6 text-black" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white font-['Outfit']">{lojaInfo.nome || lojaNome || "CellControl"}</h1>
+              <p className="text-xs text-gray-500">Controle de Celulares</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.end}
-            data-testid={`sidebar-link-${item.path.split('/').pop() || "home"}`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? "bg-[#D4AF37]/10 text-[#D4AF37] border-l-[3px] border-[#D4AF37]"
-                  : "text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5"
-              }`
-            }
+        {/* Navigation */}
+        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.end}
+              onClick={handleNavClick}
+              data-testid={`sidebar-link-${item.path.split('/').pop() || "home"}`}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? "bg-[#D4AF37]/10 text-[#D4AF37] border-l-[3px] border-[#D4AF37]"
+                    : "text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5"
+                }`
+              }
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* User & Logout */}
+        <div className="p-4 border-t border-white/5">
+          {user && (
+            <div className="mb-3 px-4 py-2">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Logado como</p>
+              <p className="text-sm text-gray-300 truncate">{user.user_email}</p>
+            </div>
+          )}
+          <Button
+            onClick={handleLogout}
+            variant="ghost"
+            className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+            data-testid="logout-button"
           >
-            <item.icon className="w-5 h-5" />
-            <span className="font-medium">{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* User & Logout */}
-      <div className="p-4 border-t border-white/5">
-        {user && (
-          <div className="mb-3 px-4 py-2">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Logado como</p>
-            <p className="text-sm text-gray-300 truncate">{user.user_email}</p>
-          </div>
-        )}
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
-          data-testid="logout-button"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Sair</span>
-        </Button>
-      </div>
-    </aside>
+            <LogOut className="w-5 h-5" />
+            <span>Sair</span>
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 };
 

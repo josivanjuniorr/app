@@ -214,60 +214,62 @@ const Garantias = () => {
           <CardContent className="p-0">
             {paginatedVendas.length > 0 ? (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-white/5 hover:bg-transparent">
-                      <TableHead className="text-gray-400 uppercase text-xs">Cliente</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs">Produto</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs">Data Venda</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs">Garantia</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs">Vencimento</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs">Status</TableHead>
-                      <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedVendas.map((venda) => (
-                      <TableRow key={venda.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-500" />
-                            <span className="text-gray-300 font-medium">{venda.cliente_nome}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-[#D4AF37] font-medium">
-                            {venda.itens_parsed?.map(i => i.modelo_nome).join(", ") || "-"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-400">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            {formatDate(venda.data)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs font-semibold rounded">
-                            {venda.garantia_meses} {venda.garantia_meses === 1 ? "mês" : "meses"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-gray-400">
-                          {formatDate(venda.garantia_ate)}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(venda.garantia_status, venda.garantia_ate)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Link to={`/${lojaSlug}/vendas/${venda.id}`}>
-                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10">
-                              <Eye className="w-4 h-4 mr-1" />Ver
-                            </Button>
-                          </Link>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/5 hover:bg-transparent">
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Cliente</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Produto</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Data Venda</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Garantia</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Vencimento</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap">Status</TableHead>
+                        <TableHead className="text-gray-400 uppercase text-xs text-right whitespace-nowrap">Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedVendas.map((venda) => (
+                        <TableRow key={venda.id} className="border-white/5 hover:bg-white/5">
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-gray-500 hidden sm:block" />
+                              <span className="text-gray-300 font-medium">{venda.cliente_nome}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="text-[#D4AF37] font-medium">
+                              {venda.itens_parsed?.map(i => i.modelo_nome).join(", ") || "-"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-400 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500 hidden sm:block" />
+                              {formatDate(venda.data)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs font-semibold rounded">
+                              {venda.garantia_meses} {venda.garantia_meses === 1 ? "mês" : "meses"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-gray-400 whitespace-nowrap">
+                            {formatDate(venda.garantia_ate)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {getStatusBadge(venda.garantia_status, venda.garantia_ate)}
+                          </TableCell>
+                          <TableCell className="text-right whitespace-nowrap">
+                            <Link to={`/${lojaSlug}/vendas/${venda.id}`}>
+                              <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10">
+                                <Eye className="w-4 h-4 sm:mr-1" /><span className="hidden sm:inline">Ver</span>
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

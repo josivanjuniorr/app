@@ -138,6 +138,14 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - Exibição de subtotal, desconto e total na venda
 - Exibição de garantia e desconto no detalhe da venda
 
+### 2026-03-09 - v2.3 Layout Responsivo Mobile
+- Header mobile com menu hamburger (três traços)
+- Menu lateral deslizante com overlay escuro
+- Layout adaptado para telas pequenas
+- Tabelas com scroll horizontal no mobile
+- Elementos ocultos/compactos no mobile para melhor usabilidade
+- Mantida compatibilidade total com versão desktop
+
 ### 2026-02-10 - v2.1 Landing Page + P1 Features
 - Landing page para seleção de loja (`/`)
 - Endpoint `/api/loja/{slug}/verify` para validação
