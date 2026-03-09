@@ -12,6 +12,7 @@ import {
   LogOut,
   Store,
   Shield,
+  Settings,
   Menu,
   X
 } from "lucide-react";
@@ -64,6 +65,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
     { path: `${basePath}/ponto-venda`, icon: ShoppingCart, label: "Ponto de Venda" },
     { path: `${basePath}/vendas`, icon: Receipt, label: "Vendas" },
     { path: `${basePath}/garantias`, icon: Shield, label: "Garantias" },
+    { path: `${basePath}/configuracoes`, icon: Settings, label: "Configurações" },
   ];
 
   const handleNavClick = () => {

@@ -22,6 +22,7 @@ import PontoVenda from "@/pages/PontoVenda";
 import Vendas from "@/pages/Vendas";
 import VendaDetail from "@/pages/VendaDetail";
 import Garantias from "@/pages/Garantias";
+import Configuracoes from "@/pages/Configuracoes";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -258,6 +259,11 @@ function AppContent() {
       <Route path="/:slug/garantias" element={
         <ProtectedStoreRoute>
           <StoreLayout><Garantias /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/configuracoes" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Configuracoes /></StoreLayout>
         </ProtectedStoreRoute>
       } />
       
