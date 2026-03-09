@@ -198,6 +198,7 @@ class VendaCreate(BaseModel):
     forma_pagamento: str
     observacao: Optional[str] = None
     garantia_meses: Optional[int] = None  # Warranty in months (0 = no warranty)
+    garantia_inicio: Optional[str] = None  # Warranty start date (ISO string)
     desconto: Optional[float] = None  # Discount value in BRL
 
 class VendaConcluida(BaseModel):
@@ -213,6 +214,7 @@ class VendaConcluida(BaseModel):
     forma_pagamento: str
     observacao: Optional[str] = None
     garantia_meses: Optional[int] = None  # Warranty in months
+    garantia_inicio: Optional[str] = None  # Warranty start date (ISO string)
     garantia_ate: Optional[str] = None  # Warranty end date (ISO string)
 
 class VendaConcluidaResponse(VendaConcluida):
@@ -1273,11 +1275,26 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     for produto_id in venda.produtos:
         await db.produtos.update_one({"id": produto_id}, {"$set": {"vendido": True}})
     
-    # Calculate warranty end date
+    # Calculate warranty dates
+    garantia_inicio = None
     garantia_ate = None
     if venda.garantia_meses and venda.garantia_meses > 0:
         from dateutil.relativedelta import relativedelta
-        garantia_ate = (datetime.now(timezone.utc) + relativedelta(months=venda.garantia_meses)).isoformat()
+        if venda.garantia_inicio:
+            try:
+                garantia_inicio_dt = datetime.fromisoformat(venda.garantia_inicio)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Data de início da garantia inválida")
+
+            if garantia_inicio_dt.tzinfo is None:
+                garantia_inicio_dt = garantia_inicio_dt.replace(tzinfo=timezone.utc)
+            else:
+                garantia_inicio_dt = garantia_inicio_dt.astimezone(timezone.utc)
+        else:
+            garantia_inicio_dt = datetime.now(timezone.utc)
+
+        garantia_inicio = garantia_inicio_dt.isoformat()
+        garantia_ate = (garantia_inicio_dt + relativedelta(months=venda.garantia_meses)).isoformat()
     
     # Apply discount
     subtotal = valor_total
@@ -1295,6 +1312,7 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
         forma_pagamento=venda.forma_pagamento,
         observacao=venda.observacao,
         garantia_meses=venda.garantia_meses,
+        garantia_inicio=garantia_inicio,
         garantia_ate=garantia_ate
     )
     

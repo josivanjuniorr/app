@@ -217,6 +217,11 @@ const VendaDetail = () => {
                         </span>
                         {getGarantiaStatusBadge(venda.garantia_status)}
                       </div>
+                      {venda.garantia_inicio && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Início: {formatDateOnly(venda.garantia_inicio)}
+                        </p>
+                      )}
                       {venda.garantia_ate && (
                         <p className="text-xs text-gray-400 mt-1">
                           Válida até: {formatDateOnly(venda.garantia_ate)}

@@ -28,6 +28,7 @@ const PontoVenda = () => {
   const [formaPagamento, setFormaPagamento] = useState("");
   const [observacao, setObservacao] = useState("");
   const [garantiaMeses, setGarantiaMeses] = useState("0");
+  const [garantiaInicio, setGarantiaInicio] = useState(() => new Date().toISOString().split("T")[0]);
   const [desconto, setDesconto] = useState("");
 
   useEffect(() => { if (lojaSlug) fetchData(); }, [lojaSlug]);
@@ -81,6 +82,7 @@ const PontoVenda = () => {
         forma_pagamento: formaPagamento,
         observacao: observacao || null,
         garantia_meses: parseInt(garantiaMeses) || 0,
+        garantia_inicio: parseInt(garantiaMeses) > 0 && garantiaInicio ? garantiaInicio : null,
         desconto: descontoValue > 0 ? descontoValue : null
       });
       toast.success("Venda finalizada com sucesso!");
@@ -187,6 +189,19 @@ const PontoVenda = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {parseInt(garantiaMeses) > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Data de início da garantia</Label>
+                  <Input
+                    type="date"
+                    value={garantiaInicio}
+                    onChange={(e) => setGarantiaInicio(e.target.value)}
+                    className="bg-[#0A0A0A] border-white/10 text-white"
+                    data-testid="input-garantia-inicio"
+                  />
+                </div>
+              )}
               
               {/* Campo de Desconto */}
               <div className="space-y-2">
