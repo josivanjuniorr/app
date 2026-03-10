@@ -88,7 +88,7 @@ const VendaDetail = () => {
     setDeleting(true);
     try {
       await axios.delete(`${API}/loja/${lojaSlug}/vendas/${id}`);
-      toast.success("Venda excluída com sucesso! Produtos retornados ao estoque.");
+      toast.success("Venda excluída com sucesso! Celulares retornados ao estoque.");
       navigate(`/${lojaSlug}/vendas`);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao excluir venda");
@@ -317,7 +317,7 @@ const VendaDetail = () => {
             <DialogDescription className="text-gray-400">
               Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.
               <br /><br />
-              <span className="text-yellow-500 font-medium">Os produtos serão devolvidos ao estoque.</span>
+              <span className="text-yellow-500 font-medium">Os celulares serão devolvidos ao estoque.</span>
             </DialogDescription>
           </DialogHeader>
           <div className="bg-[#0A0A0A] p-4 rounded-lg border border-white/5 my-4">

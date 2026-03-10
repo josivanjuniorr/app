@@ -59,7 +59,7 @@ const ProdutoForm = () => {
       setPreco(p.preco?.toString().replace(".", ",") || "");
       setValorCompra((p.valor_compra ?? "").toString().replace(".", ","));
     } catch (error) {
-      toast.error("Erro ao carregar produto");
+      toast.error("Erro ao carregar celular");
       navigate(`/${lojaSlug}/produtos`);
     } finally {
       setFetching(false);
@@ -68,7 +68,7 @@ const ProdutoForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!cor.trim() || !armazenamento.trim() || !memoriaRam.trim()) { toast.error("Cor, armazenamento e memória RAM são obrigatórios"); return; }
+    if (!cor.trim() || !armazenamento.trim()) { toast.error("Cor e armazenamento são obrigatórios"); return; }
     const precoNum = parseFloat(preco.replace(",", "."));
     const valorCompraNum = parseFloat(valorCompra.replace(",", "."));
     if (isNaN(precoNum) || precoNum <= 0) { toast.error("Preço inválido"); return; }
@@ -80,7 +80,7 @@ const ProdutoForm = () => {
       const data = {
         cor: cor.trim(),
         armazenamento: armazenamento.trim(),
-        memoria_ram: memoriaRam.trim(),
+        memoria_ram: memoriaRam.trim() || null,
         bateria: bateria ? parseInt(bateria) : null,
         imei: imei.trim() || null,
         preco: precoNum,
@@ -88,10 +88,10 @@ const ProdutoForm = () => {
       };
       if (isEditing) {
         await axios.put(`${API}/loja/${lojaSlug}/produtos/${id}`, data);
-        toast.success("Produto atualizado!");
+        toast.success("Celular atualizado!");
       } else {
         await axios.post(`${API}/loja/${lojaSlug}/produtos`, { ...data, modelo_id: modeloId });
-        toast.success("Produto criado!");
+        toast.success("Celular criado!");
       }
       navigate(`/${lojaSlug}/produtos`);
     } catch (error) {
@@ -109,7 +109,7 @@ const ProdutoForm = () => {
         <Link to={`/${lojaSlug}/produtos`}><Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-white/5"><ArrowLeft className="w-5 h-5" /></Button></Link>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Package className="w-5 h-5 text-blue-500" /></div>
-          <div><h1 className="text-2xl font-bold text-white font-['Outfit']">{isEditing ? "Editar Produto" : "Novo Produto"}</h1><p className="text-sm text-gray-400">{isEditing ? "Atualize as informações" : "Cadastre um novo produto"}</p></div>
+          <div><h1 className="text-2xl font-bold text-white font-['Outfit']">{isEditing ? "Editar Celular" : "Novo Celular"}</h1><p className="text-sm text-gray-400">{isEditing ? "Atualize as informações" : "Cadastre um novo celular"}</p></div>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ const ProdutoForm = () => {
               <div className="space-y-2"><Label className="text-gray-300">Armazenamento *</Label><Input placeholder="Ex: 128GB" value={armazenamento} onChange={(e) => setArmazenamento(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-armazenamento" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-gray-300">Memória RAM *</Label><Input placeholder="Ex: 8GB" value={memoriaRam} onChange={(e) => setMemoriaRam(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria-ram" /></div>
+              <div className="space-y-2"><Label className="text-gray-300">Memória RAM</Label><Input placeholder="Ex: 8GB (opcional)" value={memoriaRam} onChange={(e) => setMemoriaRam(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria-ram" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" placeholder="Ex: 100" value={bateria} onChange={(e) => setBateria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-bateria" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

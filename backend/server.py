@@ -192,6 +192,15 @@ class VendaItem(BaseModel):
     memoria: Optional[str] = ""
     preco: float
 
+class TrocaProdutoCreate(BaseModel):
+    modelo_id: str
+    cor: str
+    memoria: str
+    memoria_ram: Optional[str] = None
+    bateria: Optional[int] = None
+    imei: Optional[str] = None
+    valor_recebido: float
+
 class VendaCreate(BaseModel):
     cliente_id: str
     produtos: List[str]
@@ -200,6 +209,8 @@ class VendaCreate(BaseModel):
     garantia_meses: Optional[int] = None  # Warranty in months (0 = no warranty)
     garantia_inicio: Optional[str] = None  # Warranty start date (ISO string)
     desconto: Optional[float] = None  # Discount value in BRL
+    possui_troca: Optional[bool] = False
+    troca: Optional[TrocaProdutoCreate] = None
 
 class VendaConcluida(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1251,6 +1262,43 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     
     itens = []
     valor_total = 0
+
+    desconto_troca = 0
+    observacao_venda = venda.observacao
+
+    # Se houver troca, cadastra o aparelho recebido no estoque automaticamente.
+    if venda.possui_troca:
+        if not venda.troca:
+            raise HTTPException(status_code=400, detail="Dados da troca são obrigatórios")
+        if not venda.troca.cor.strip() or not venda.troca.memoria.strip():
+            raise HTTPException(status_code=400, detail="Cor e memória do aparelho recebido são obrigatórios")
+        if venda.troca.valor_recebido <= 0:
+            raise HTTPException(status_code=400, detail="Valor recebido na troca deve ser maior que zero")
+
+        modelo_troca = await db.modelos.find_one({"id": venda.troca.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
+        if not modelo_troca:
+            raise HTTPException(status_code=404, detail="Modelo do aparelho recebido não encontrado")
+
+        produto_troca = Produto(
+            modelo_id=venda.troca.modelo_id,
+            cor=venda.troca.cor.strip(),
+            memoria=venda.troca.memoria.strip(),
+            bateria=venda.troca.bateria,
+            imei=(venda.troca.imei or "").strip() or None,
+            preco=venda.troca.valor_recebido,
+            loja_id=loja["id"]
+        )
+        troca_doc = produto_troca.model_dump()
+        troca_doc["created_at"] = troca_doc["created_at"].isoformat()
+        await db.produtos.insert_one(troca_doc)
+
+        desconto_troca = venda.troca.valor_recebido
+        memoria_ram_troca = (venda.troca.memoria_ram or "").strip()
+        detalhe_troca = f"Troca recebida: {modelo_troca.get('nome', 'Modelo')} {venda.troca.cor} {venda.troca.memoria}"
+        if memoria_ram_troca:
+            detalhe_troca += f" / RAM {memoria_ram_troca}"
+        detalhe_troca += f" por R$ {venda.troca.valor_recebido:.2f}."
+        observacao_venda = f"{venda.observacao}\n{detalhe_troca}" if venda.observacao else detalhe_troca
     
     for produto_id in venda.produtos:
         produto = await db.produtos.find_one({"id": produto_id, "loja_id": loja["id"]}, {"_id": 0})
@@ -1298,7 +1346,9 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     
     # Apply discount
     subtotal = valor_total
-    desconto = venda.desconto if venda.desconto and venda.desconto > 0 else None
+    desconto_manual = venda.desconto if venda.desconto and venda.desconto > 0 else 0
+    desconto = desconto_troca if venda.possui_troca else desconto_manual
+    desconto = desconto if desconto > 0 else None
     if desconto:
         valor_total = max(0, valor_total - desconto)  # Ensure total is not negative
     
@@ -1310,7 +1360,7 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
         valor_total=valor_total,
         cliente_id=venda.cliente_id,
         forma_pagamento=venda.forma_pagamento,
-        observacao=venda.observacao,
+        observacao=observacao_venda,
         garantia_meses=venda.garantia_meses,
         garantia_inicio=garantia_inicio,
         garantia_ate=garantia_ate

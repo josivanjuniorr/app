@@ -61,7 +61,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
   const menuItems = [
     { path: basePath, icon: LayoutDashboard, label: "Início", end: true },
     { path: `${basePath}/modelos`, icon: Smartphone, label: "Modelos" },
-    { path: `${basePath}/produtos`, icon: Package, label: "Produtos" },
+    { path: `${basePath}/produtos`, icon: Package, label: "Celulares" },
     { path: `${basePath}/clientes`, icon: Users, label: "Clientes" },
     { path: `${basePath}/ponto-venda`, icon: ShoppingCart, label: "Ponto de Venda" },
     { path: `${basePath}/vendas`, icon: Receipt, label: "Vendas" },

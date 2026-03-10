@@ -134,7 +134,7 @@ const Dashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Em Estoque</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Celulares em Estoque</p>
                 <p className="text-3xl font-bold text-white mt-2">{stats?.total_produtos || 0}</p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">

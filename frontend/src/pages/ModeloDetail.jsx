@@ -51,7 +51,7 @@ const ModeloDetail = () => {
 
   const handleAddProduto = async (e) => {
     e.preventDefault();
-    if (!cor.trim() || !armazenamento.trim() || !memoriaRam.trim()) { toast.error("Cor, armazenamento e memória RAM são obrigatórios"); return; }
+    if (!cor.trim() || !armazenamento.trim()) { toast.error("Cor e armazenamento são obrigatórios"); return; }
     const precoNum = parseFloat(preco.replace(",", "."));
     const valorCompraNum = parseFloat(valorCompra.replace(",", "."));
     if (isNaN(precoNum) || precoNum <= 0) { toast.error("Preço inválido"); return; }
@@ -60,10 +60,10 @@ const ModeloDetail = () => {
     setSubmitting(true);
     try {
       await axios.post(`${API}/loja/${lojaSlug}/produtos`, {
-        modelo_id: id, cor: cor.trim(), armazenamento: armazenamento.trim(), memoria_ram: memoriaRam.trim(),
+        modelo_id: id, cor: cor.trim(), armazenamento: armazenamento.trim(), memoria_ram: memoriaRam.trim() || null,
         bateria: bateria ? parseInt(bateria) : null, imei: imei.trim() || null, preco: precoNum, valor_compra: valorCompraNum
       });
-      toast.success("Produto cadastrado!");
+      toast.success("Celular cadastrado!");
       setCor(""); setArmazenamento(""); setMemoriaRam(""); setBateria(""); setImei(""); setPreco(""); setValorCompra(""); setShowForm(false);
       fetchData();
     } catch (error) {
@@ -77,7 +77,7 @@ const ModeloDetail = () => {
     if (!deleteId) return;
     try {
       await axios.delete(`${API}/loja/${lojaSlug}/produtos/${deleteId}`);
-      toast.success("Produto excluído");
+      toast.success("Celular excluído");
       fetchData();
     } catch (error) {
       toast.error("Erro ao excluir");
@@ -99,23 +99,23 @@ const ModeloDetail = () => {
             <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center"><Smartphone className="w-5 h-5 text-[#D4AF37]" /></div>
             <div>
               <h1 className="text-2xl font-bold text-white font-['Outfit']">{modelo?.nome}</h1>
-              <p className="text-sm text-gray-400">{modelo?.quantidade_produtos || 0} produtos em estoque</p>
+              <p className="text-sm text-gray-400">{modelo?.quantidade_produtos || 0} celulares em estoque</p>
             </div>
           </div>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-add-produto">
-          <Plus className="w-4 h-4 mr-2" />Adicionar Produto
+          <Plus className="w-4 h-4 mr-2" />Adicionar Celular
         </Button>
       </div>
 
       {showForm && (
         <Card className="bg-[#141414] border border-white/5 animate-fade-in">
-          <CardHeader className="border-b border-white/5"><CardTitle className="text-lg font-semibold text-white">Novo Produto</CardTitle></CardHeader>
+          <CardHeader className="border-b border-white/5"><CardTitle className="text-lg font-semibold text-white">Novo Celular</CardTitle></CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleAddProduto} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2"><Label className="text-gray-300">Cor *</Label><Input placeholder="Ex: Preto" value={cor} onChange={(e) => setCor(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-cor" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Armazenamento *</Label><Input placeholder="Ex: 128GB" value={armazenamento} onChange={(e) => setArmazenamento(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-armazenamento" /></div>
-              <div className="space-y-2"><Label className="text-gray-300">Memória RAM *</Label><Input placeholder="Ex: 8GB" value={memoriaRam} onChange={(e) => setMemoriaRam(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria-ram" /></div>
+              <div className="space-y-2"><Label className="text-gray-300">Memória RAM</Label><Input placeholder="Ex: 8GB (opcional)" value={memoriaRam} onChange={(e) => setMemoriaRam(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria-ram" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" placeholder="Ex: 100" value={bateria} onChange={(e) => setBateria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-bateria" /></div>
               <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input placeholder="Ex: 123456789" value={imei} onChange={(e) => setImei(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-imei" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Preço *</Label><Input placeholder="Ex: 5999" value={preco} onChange={(e) => setPreco(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-preco" /></div>
@@ -131,7 +131,7 @@ const ModeloDetail = () => {
 
       <Card className="bg-[#141414] border border-white/5">
         <CardHeader className="border-b border-white/5">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Package className="w-5 h-5 text-blue-500" /></div><CardTitle className="text-lg font-semibold text-white">Produtos em Estoque</CardTitle></div>
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Package className="w-5 h-5 text-blue-500" /></div><CardTitle className="text-lg font-semibold text-white">Celulares em Estoque</CardTitle></div>
         </CardHeader>
         <CardContent className="p-0">
           {produtos.length > 0 ? (
@@ -167,14 +167,14 @@ const ModeloDetail = () => {
               </TableBody>
             </Table>
           ) : (
-            <div className="p-12 text-center"><Package className="w-12 h-12 text-gray-600 mx-auto mb-4" /><p className="text-gray-500">Nenhum produto em estoque</p><Button className="mt-4 bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" onClick={() => setShowForm(true)}><Plus className="w-4 h-4 mr-2" />Adicionar Produto</Button></div>
+            <div className="p-12 text-center"><Package className="w-12 h-12 text-gray-600 mx-auto mb-4" /><p className="text-gray-500">Nenhum celular em estoque</p><Button className="mt-4 bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" onClick={() => setShowForm(true)}><Plus className="w-4 h-4 mr-2" />Adicionar Celular</Button></div>
           )}
         </CardContent>
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-[#141414] border border-white/10">
-          <AlertDialogHeader><AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle><AlertDialogDescription className="text-gray-400">Tem certeza que deseja excluir este produto?</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle><AlertDialogDescription className="text-gray-400">Tem certeza que deseja excluir este celular?</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10">Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-red-500 text-white hover:bg-red-600">Excluir</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

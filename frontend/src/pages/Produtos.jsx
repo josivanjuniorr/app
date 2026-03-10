@@ -49,7 +49,7 @@ const Produtos = () => {
     if (!deleteId) return;
     try {
       await axios.delete(`${API}/loja/${lojaSlug}/produtos/${deleteId}`);
-      toast.success("Produto excluído");
+      toast.success("Celular excluído");
       fetchData();
     } catch (error) {
       toast.error("Erro ao excluir");
@@ -88,13 +88,13 @@ const Produtos = () => {
             <Package className="w-5 h-5 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white font-['Outfit']">Produtos</h1>
-            <p className="text-sm text-gray-400">{filteredProdutos.length} produtos em estoque</p>
+            <h1 className="text-2xl font-bold text-white font-['Outfit']">Celulares</h1>
+            <p className="text-sm text-gray-400">{filteredProdutos.length} celulares em estoque</p>
           </div>
         </div>
         <Link to={`/${lojaSlug}/produtos/novo`}>
           <Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-novo-produto">
-            <Plus className="w-4 h-4 mr-2" />Novo Produto
+            <Plus className="w-4 h-4 mr-2" />Novo Celular
           </Button>
         </Link>
       </div>
@@ -184,7 +184,7 @@ const Produtos = () => {
           ) : (
             <div className="p-12 text-center">
               <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum produto encontrado</p>
+              <p className="text-gray-500">Nenhum celular encontrado</p>
             </div>
           )}
         </CardContent>
@@ -194,7 +194,7 @@ const Produtos = () => {
         <AlertDialogContent className="bg-[#141414] border border-white/10">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">Tem certeza que deseja excluir este produto?</AlertDialogDescription>
+            <AlertDialogDescription className="text-gray-400">Tem certeza que deseja excluir este celular?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-white/5 border-white/10 text-gray-300">Cancelar</AlertDialogCancel>
