@@ -9,6 +9,7 @@ import {
   Users, 
   ShoppingCart, 
   Receipt, 
+  FileBarChart2,
   LogOut,
   Store,
   Shield,
@@ -64,6 +65,7 @@ const Sidebar = ({ lojaSlug, lojaNome }) => {
     { path: `${basePath}/clientes`, icon: Users, label: "Clientes" },
     { path: `${basePath}/ponto-venda`, icon: ShoppingCart, label: "Ponto de Venda" },
     { path: `${basePath}/vendas`, icon: Receipt, label: "Vendas" },
+    { path: `${basePath}/relatorio`, icon: FileBarChart2, label: "Relatório" },
     { path: `${basePath}/garantias`, icon: Shield, label: "Garantias" },
     { path: `${basePath}/configuracoes`, icon: Settings, label: "Configurações" },
   ];

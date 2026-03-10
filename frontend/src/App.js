@@ -21,6 +21,7 @@ import ClienteForm from "@/pages/ClienteForm";
 import PontoVenda from "@/pages/PontoVenda";
 import Vendas from "@/pages/Vendas";
 import VendaDetail from "@/pages/VendaDetail";
+import Relatorio from "@/pages/Relatorio";
 import Garantias from "@/pages/Garantias";
 import Configuracoes from "@/pages/Configuracoes";
 
@@ -254,6 +255,11 @@ function AppContent() {
       <Route path="/:slug/vendas/:id" element={
         <ProtectedStoreRoute>
           <StoreLayout><VendaDetail /></StoreLayout>
+        </ProtectedStoreRoute>
+      } />
+      <Route path="/:slug/relatorio" element={
+        <ProtectedStoreRoute>
+          <StoreLayout><Relatorio /></StoreLayout>
         </ProtectedStoreRoute>
       } />
       <Route path="/:slug/garantias" element={

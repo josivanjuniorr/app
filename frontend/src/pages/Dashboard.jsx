@@ -8,14 +8,30 @@ import {
   Smartphone, 
   Package, 
   Users, 
-  ShoppingCart, 
   TrendingUp, 
   AlertTriangle,
   DollarSign,
   Calendar,
+  RefreshCcw,
   ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
+
+const toInputDateLocal = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getMesAtualRange = () => {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  return {
+    inicio: toInputDateLocal(firstDay),
+    fim: toInputDateLocal(now),
+  };
+};
 
 const Dashboard = () => {
   const { slug } = useParams();
@@ -24,8 +40,8 @@ const Dashboard = () => {
   
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const [dataInicio, setDataInicio] = useState(() => getMesAtualRange().inicio);
+  const [dataFim, setDataFim] = useState(() => getMesAtualRange().fim);
 
   useEffect(() => {
     if (lojaSlug) {
@@ -56,11 +72,9 @@ const Dashboard = () => {
   };
 
   const handlePeriodoAtual = () => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const fmt = (d) => d.toISOString().split("T")[0];
-    setDataInicio(fmt(firstDay));
-    setDataFim(fmt(now));
+    const range = getMesAtualRange();
+    setDataInicio(range.inicio);
+    setDataFim(range.fim);
   };
 
   const limparPeriodo = () => {
@@ -92,25 +106,11 @@ const Dashboard = () => {
             <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="bg-transparent text-gray-300 text-sm outline-none" data-testid="periodo-fim" />
           </div>
           <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" onClick={handlePeriodoAtual} data-testid="btn-periodo-atual">Mês Atual</Button>
+          <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-white/5 px-3" onClick={fetchDashboard} data-testid="btn-atualizar-dashboard">
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
           <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" onClick={limparPeriodo} data-testid="btn-limpar-periodo">Limpar</Button>
-          <Link to={`/${lojaSlug}/modelos`}>
-            <Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-modelos">
-              <Smartphone className="w-4 h-4 mr-2" />
-              Modelos
-            </Button>
-          </Link>
-          <Link to={`/${lojaSlug}/clientes`}>
-            <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" data-testid="btn-clientes">
-              <Users className="w-4 h-4 mr-2" />
-              Clientes
-            </Button>
-          </Link>
-          <Link to={`/${lojaSlug}/ponto-venda`}>
-            <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" data-testid="btn-vender">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Vender
-            </Button>
-          </Link>
         </div>
       </div>
 

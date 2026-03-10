@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { ShoppingCart, Search, User, Package, Plus, X, CreditCard, CheckCircle, Shield, Percent } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,7 +19,6 @@ const PontoVenda = () => {
   
   const [produtos, setProdutos] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [modelos, setModelos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchProduto, setSearchProduto] = useState("");
@@ -32,27 +30,17 @@ const PontoVenda = () => {
   const [garantiaMeses, setGarantiaMeses] = useState("0");
   const [garantiaInicio, setGarantiaInicio] = useState(() => new Date().toISOString().split("T")[0]);
   const [desconto, setDesconto] = useState("");
-  const [possuiTroca, setPossuiTroca] = useState(false);
-  const [trocaModeloId, setTrocaModeloId] = useState("");
-  const [trocaCor, setTrocaCor] = useState("");
-  const [trocaArmazenamento, setTrocaArmazenamento] = useState("");
-  const [trocaMemoriaRam, setTrocaMemoriaRam] = useState("");
-  const [trocaBateria, setTrocaBateria] = useState("");
-  const [trocaImei, setTrocaImei] = useState("");
-  const [trocaValorRecebido, setTrocaValorRecebido] = useState("");
 
   useEffect(() => { if (lojaSlug) fetchData(); }, [lojaSlug]);
 
   const fetchData = async () => {
     try {
-      const [produtosRes, clientesRes, modelosRes] = await Promise.all([
+      const [produtosRes, clientesRes] = await Promise.all([
         axios.get(`${API}/loja/${lojaSlug}/produtos`, { params: { vendido: false } }),
-        axios.get(`${API}/loja/${lojaSlug}/clientes`),
-        axios.get(`${API}/loja/${lojaSlug}/modelos`)
+        axios.get(`${API}/loja/${lojaSlug}/clientes`)
       ]);
       setProdutos(produtosRes.data);
       setClientes(clientesRes.data);
-      setModelos(modelosRes.data);
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -66,12 +54,7 @@ const PontoVenda = () => {
     return produtos.filter((p) => {
       const s = searchProduto.toLowerCase();
       const notSelected = !selectedProdutos.some(sp => sp.id === p.id);
-      return notSelected && (
-        p.modelo_nome?.toLowerCase().includes(s) ||
-        p.cor.toLowerCase().includes(s) ||
-        (p.armazenamento || p.memoria || "").toLowerCase().includes(s) ||
-        (p.memoria_ram || "").toLowerCase().includes(s)
-      );
+      return notSelected && (p.modelo_nome?.toLowerCase().includes(s) || p.cor.toLowerCase().includes(s) || p.memoria.toLowerCase().includes(s));
     });
   }, [produtos, searchProduto, selectedProdutos]);
 
@@ -83,24 +66,13 @@ const PontoVenda = () => {
   }, [clientes, searchCliente]);
 
   const total = useMemo(() => selectedProdutos.reduce((sum, p) => sum + p.preco, 0), [selectedProdutos]);
-  const custoTotal = useMemo(() => selectedProdutos.reduce((sum, p) => sum + (p.valor_compra || 0), 0), [selectedProdutos]);
-  const descontoValue = useMemo(() => {
-    if (possuiTroca) return parseFloat(trocaValorRecebido) || 0;
-    return parseFloat(desconto) || 0;
-  }, [desconto, possuiTroca, trocaValorRecebido]);
+  const descontoValue = useMemo(() => parseFloat(desconto) || 0, [desconto]);
   const totalComDesconto = useMemo(() => Math.max(0, total - descontoValue), [total, descontoValue]);
-  const lucroEstimado = useMemo(() => totalComDesconto - custoTotal, [totalComDesconto, custoTotal]);
 
   const handleSubmit = async () => {
     if (!selectedCliente) { toast.error("Selecione um cliente"); return; }
     if (selectedProdutos.length === 0) { toast.error("Adicione ao menos um produto"); return; }
     if (!formaPagamento) { toast.error("Selecione a forma de pagamento"); return; }
-    if (possuiTroca) {
-      const valorRecebido = parseFloat(trocaValorRecebido);
-      if (!trocaModeloId) { toast.error("Selecione o modelo do aparelho recebido"); return; }
-      if (!trocaCor.trim() || !trocaArmazenamento.trim() || !trocaMemoriaRam.trim()) { toast.error("Cor, armazenamento e memória RAM da troca são obrigatórios"); return; }
-      if (isNaN(valorRecebido) || valorRecebido <= 0) { toast.error("Informe um valor recebido válido para a troca"); return; }
-    }
 
     setSubmitting(true);
     try {
@@ -111,17 +83,7 @@ const PontoVenda = () => {
         observacao: observacao || null,
         garantia_meses: parseInt(garantiaMeses) || 0,
         garantia_inicio: parseInt(garantiaMeses) > 0 && garantiaInicio ? garantiaInicio : null,
-        desconto: descontoValue > 0 ? descontoValue : null,
-        possui_troca: possuiTroca,
-        troca: possuiTroca ? {
-          modelo_id: trocaModeloId,
-          cor: trocaCor.trim(),
-          armazenamento: trocaArmazenamento.trim(),
-          memoria_ram: trocaMemoriaRam.trim(),
-          bateria: trocaBateria ? parseInt(trocaBateria) : null,
-          imei: trocaImei.trim() || null,
-          valor_recebido: parseFloat(trocaValorRecebido)
-        } : null
+        desconto: descontoValue > 0 ? descontoValue : null
       });
       toast.success("Venda finalizada com sucesso!");
       navigate(`/${lojaSlug}/vendas`);
@@ -150,7 +112,7 @@ const PontoVenda = () => {
               <div className="max-h-[400px] overflow-y-auto space-y-2">
                 {filteredProdutos.length > 0 ? filteredProdutos.map((produto) => (
                   <div key={produto.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5 hover:border-[#D4AF37]/30 transition-colors">
-                    <div className="flex-1"><p className="text-[#D4AF37] font-medium">{produto.modelo_nome}</p><p className="text-sm text-gray-400">{produto.cor} • {produto.armazenamento || produto.memoria} • {produto.memoria_ram || "RAM n/i"}{produto.bateria && ` • ${produto.bateria}%`}</p></div>
+                    <div className="flex-1"><p className="text-[#D4AF37] font-medium">{produto.modelo_nome}</p><p className="text-sm text-gray-400">{produto.cor} • {produto.memoria}{produto.bateria && ` • ${produto.bateria}%`}</p></div>
                     <div className="flex items-center gap-3"><span className="text-green-500 font-semibold">{formatCurrency(produto.preco)}</span><Button size="sm" onClick={() => setSelectedProdutos([...selectedProdutos, produto])} className="bg-[#D4AF37] text-black hover:bg-[#B5952F]" data-testid={`add-produto-${produto.id}`}><Plus className="w-4 h-4" /></Button></div>
                   </div>
                 )) : <p className="text-center text-gray-500 py-8">Nenhum produto disponível</p>}
@@ -184,7 +146,7 @@ const PontoVenda = () => {
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {selectedProdutos.map((p) => (
                     <div key={p.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
-                      <div className="flex-1 min-w-0"><p className="text-white font-medium truncate">{p.modelo_nome}</p><p className="text-sm text-gray-400 truncate">{p.cor} • {p.armazenamento || p.memoria} • {p.memoria_ram || "RAM n/i"}</p></div>
+                      <div className="flex-1 min-w-0"><p className="text-white font-medium truncate">{p.modelo_nome}</p><p className="text-sm text-gray-400 truncate">{p.cor} • {p.memoria}</p></div>
                       <div className="flex items-center gap-2"><span className="text-green-500 font-semibold text-sm">{formatCurrency(p.preco)}</span><Button size="sm" variant="ghost" onClick={() => setSelectedProdutos(selectedProdutos.filter(sp => sp.id !== p.id))} className="text-gray-400 hover:text-red-400 p-1" data-testid={`remove-produto-${p.id}`}><X className="w-4 h-4" /></Button></div>
                     </div>
                   ))}
@@ -254,42 +216,9 @@ const PontoVenda = () => {
                   placeholder="0,00"
                   value={desconto}
                   onChange={(e) => setDesconto(e.target.value)}
-                  disabled={possuiTroca}
                   className="bg-[#0A0A0A] border-white/10 text-white"
                   data-testid="input-desconto"
                 />
-                {possuiTroca && <p className="text-xs text-yellow-400">Desconto automático pela troca: {formatCurrency(descontoValue)}</p>}
-              </div>
-
-              <div className="space-y-3 rounded-lg border border-white/10 p-3 bg-[#101010]">
-                <div className="flex items-center justify-between">
-                  <Label className="text-gray-300">Possui troca?</Label>
-                  <Switch checked={possuiTroca} onCheckedChange={setPossuiTroca} data-testid="switch-possui-troca" />
-                </div>
-                {possuiTroca && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-gray-300">Modelo do aparelho recebido *</Label>
-                      <Select value={trocaModeloId} onValueChange={setTrocaModeloId}>
-                        <SelectTrigger className="bg-[#0A0A0A] border-white/10 text-white" data-testid="select-troca-modelo">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#141414] border-white/10">
-                          {modelos.map((m) => (
-                            <SelectItem key={m.id} value={m.id} className="text-gray-300">{m.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2"><Label className="text-gray-300">Cor *</Label><Input value={trocaCor} onChange={(e) => setTrocaCor(e.target.value)} placeholder="Ex: Preto" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-cor" /></div>
-                    <div className="space-y-2"><Label className="text-gray-300">Armazenamento *</Label><Input value={trocaArmazenamento} onChange={(e) => setTrocaArmazenamento(e.target.value)} placeholder="Ex: 128GB" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-armazenamento" /></div>
-                    <div className="space-y-2"><Label className="text-gray-300">Memória RAM *</Label><Input value={trocaMemoriaRam} onChange={(e) => setTrocaMemoriaRam(e.target.value)} placeholder="Ex: 8GB" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-memoria-ram" /></div>
-                    <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" value={trocaBateria} onChange={(e) => setTrocaBateria(e.target.value)} placeholder="Ex: 85" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-bateria" /></div>
-                    <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input value={trocaImei} onChange={(e) => setTrocaImei(e.target.value)} placeholder="Ex: 123456789" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-imei" /></div>
-                    <div className="space-y-2 md:col-span-2"><Label className="text-gray-300">Valor recebido na troca (R$) *</Label><Input type="number" min="0" step="0.01" value={trocaValorRecebido} onChange={(e) => setTrocaValorRecebido(e.target.value)} placeholder="Ex: 1500" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-valor" /></div>
-                    <p className="text-xs text-gray-400 md:col-span-2">O aparelho recebido será cadastrado automaticamente no estoque com este valor como custo e também como desconto da venda.</p>
-                  </div>
-                )}
               </div>
               
               <div className="space-y-2"><Label className="text-gray-300">Observação</Label><Textarea placeholder="Observações..." value={observacao} onChange={(e) => setObservacao(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white min-h-[60px]" data-testid="input-observacao" /></div>
@@ -307,16 +236,6 @@ const PontoVenda = () => {
                     </div>
                   </div>
                 )}
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-sm">Custo total</span>
-                    <span className="text-gray-400">{formatCurrency(custoTotal)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#D4AF37] text-sm">Lucro estimado</span>
-                    <span className="text-[#D4AF37]">{formatCurrency(lucroEstimado)}</span>
-                  </div>
-                </div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-gray-400 uppercase text-sm tracking-wider">Total</span>
                   <span className="text-2xl font-bold text-[#D4AF37]" data-testid="total-value">{formatCurrency(totalComDesconto)}</span>

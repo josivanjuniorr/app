@@ -131,26 +131,20 @@ class ModeloWithQuantity(Modelo):
 class ProdutoBase(BaseModel):
     modelo_id: str
     cor: str
-    armazenamento: str
-    memoria_ram: str
-    memoria: Optional[str] = None
+    memoria: str
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: float
-    valor_compra: Optional[float] = 0
 
 class ProdutoCreate(ProdutoBase):
     pass
 
 class ProdutoUpdate(BaseModel):
     cor: Optional[str] = None
-    armazenamento: Optional[str] = None
-    memoria_ram: Optional[str] = None
     memoria: Optional[str] = None
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: Optional[float] = None
-    valor_compra: Optional[float] = None
 
 class Produto(ProdutoBase):
     model_config = ConfigDict(extra="ignore")
@@ -195,21 +189,8 @@ class VendaItem(BaseModel):
     modelo_id: Optional[str] = None
     modelo_nome: str
     cor: Optional[str] = ""
-    armazenamento: Optional[str] = ""
-    memoria_ram: Optional[str] = ""
     memoria: Optional[str] = ""
     preco: float
-    valor_compra: Optional[float] = 0
-    lucro_estimado: Optional[float] = None
-
-class TrocaProdutoCreate(BaseModel):
-    modelo_id: str
-    cor: str
-    armazenamento: str
-    memoria_ram: str
-    bateria: Optional[int] = None
-    imei: Optional[str] = None
-    valor_recebido: float
 
 class VendaCreate(BaseModel):
     cliente_id: str
@@ -219,8 +200,6 @@ class VendaCreate(BaseModel):
     garantia_meses: Optional[int] = None  # Warranty in months (0 = no warranty)
     garantia_inicio: Optional[str] = None  # Warranty start date (ISO string)
     desconto: Optional[float] = None  # Discount value in BRL
-    possui_troca: Optional[bool] = False
-    troca: Optional[TrocaProdutoCreate] = None
 
 class VendaConcluida(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -229,8 +208,6 @@ class VendaConcluida(BaseModel):
     data: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     itens: str
     valor_total: float
-    custo_total: Optional[float] = None
-    lucro_estimado: Optional[float] = None
     subtotal: Optional[float] = None  # Total before discount
     desconto: Optional[float] = None  # Discount value in BRL
     cliente_id: str
@@ -252,7 +229,6 @@ class DashboardStats(BaseModel):
     total_clientes: int
     total_vendas: int
     valor_total_vendas: float
-    lucro_estimado_periodo: float = 0
     modelos_com_estoque: List[ModeloWithQuantity]
     modelos_sem_estoque: List[Modelo]
     top_modelos: List[dict]
@@ -663,12 +639,10 @@ async def import_data(
                 old_modelo_id = str(record.get('modelo_id', '')).strip()
                 modelo_nome = record.get('modelo', record.get('modelo_nome', '')).strip()
                 cor = record.get('cor', '').strip()
-                armazenamento = record.get('armazenamento', record.get('memoria', '')).strip()
-                memoria_ram = record.get('memoria_ram', record.get('ram', '')).strip()
+                memoria = record.get('memoria', '').strip()
                 bateria = str(record.get('bateria', record.get('saude_bateria', ''))).strip()
                 imei = record.get('imei', '').strip()
                 preco = record.get('preco', record.get('valor', 0))
-                valor_compra = record.get('valor_compra', record.get('custo', preco))
                 vendido = str(record.get('vendido', 'false')).lower() in ['true', '1', 'yes', 'sim']
                 
                 # Try to get modelo_id from mapping or by name
@@ -704,11 +678,6 @@ async def import_data(
                     preco = float(str(preco).replace('R$', '').replace(',', '.').strip())
                 except:
                     preco = 0.0
-
-                try:
-                    valor_compra = float(str(valor_compra).replace('R$', '').replace(',', '.').strip())
-                except:
-                    valor_compra = preco
                 
                 # Convert bateria to string
                 if bateria:
@@ -722,13 +691,10 @@ async def import_data(
                     "id": new_id,
                     "modelo_id": modelo_id,
                     "cor": cor,
-                    "armazenamento": armazenamento,
-                    "memoria_ram": memoria_ram,
-                    "memoria": armazenamento,
+                    "memoria": memoria,
                     "bateria": bateria,
                     "imei": imei,
                     "preco": preco,
-                    "valor_compra": valor_compra,
                     "vendido": vendido,
                     "loja_id": loja_id,
                     "created_at": datetime.now(timezone.utc).isoformat()
@@ -852,9 +818,7 @@ async def import_data(
                                 "produto_id": str(item.get('id', uuid.uuid4())),
                                 "modelo_nome": modelo_info.get('nome', item.get('modelo_nome', 'Produto')),
                                 "cor": item.get('cor', ''),
-                                "armazenamento": str(item.get('armazenamento', item.get('memoria', ''))),
-                                "memoria_ram": str(item.get('memoria_ram', '')),
-                                "memoria": str(item.get('memoria', item.get('armazenamento', ''))),
+                                "memoria": str(item.get('memoria', '')),
                                 "preco": float(item.get('preco', 0))
                             })
                     except:
@@ -866,8 +830,6 @@ async def import_data(
                         "produto_id": str(uuid.uuid4()),
                         "modelo_nome": "Produto Importado",
                         "cor": "",
-                        "armazenamento": "",
-                        "memoria_ram": "",
                         "memoria": "",
                         "preco": valor_total
                     }]
@@ -994,31 +956,17 @@ async def delete_usuario(user_id: str, payload: dict = Depends(require_super_adm
 # ============== LOJA ROUTES ==============
 
 @loja_router.get("/{slug}/dashboard", response_model=DashboardStats)
-async def loja_dashboard(
-    slug: str,
-    mes: Optional[str] = None,
-    data_inicio: Optional[str] = None,
-    data_fim: Optional[str] = None,
-    payload: dict = Depends(require_loja_access)
-):
+async def loja_dashboard(slug: str, mes: Optional[str] = None, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
     loja_id = loja["id"]
     
     total_modelos = await db.modelos.count_documents({"loja_id": loja_id})
     total_produtos = await db.produtos.count_documents({"loja_id": loja_id, "vendido": False})
     total_clientes = await db.clientes.count_documents({"loja_id": loja_id})
+    total_vendas = await db.vendas_concluidas.count_documents({"loja_id": loja_id})
+    
     vendas = await db.vendas_concluidas.find({"loja_id": loja_id}, {"_id": 0}).to_list(1000)
-
-    def parse_venda_data(value: str) -> Optional[datetime]:
-        try:
-            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            else:
-                dt = dt.astimezone(timezone.utc)
-            return dt
-        except:
-            return None
+    valor_total_vendas = sum(v.get("valor_total", 0) for v in vendas)
     
     modelos = await db.modelos.find({"loja_id": loja_id}, {"_id": 0}).to_list(1000)
     modelos_com_estoque = []
@@ -1032,43 +980,11 @@ async def loja_dashboard(
         else:
             modelos_sem_estoque.append(Modelo(**modelo))
     
-    # Top models + resumo por período
+    # Top models
     modelo_sales = {}
     filtered_vendas = vendas
-
-    start_dt = None
-    end_dt = None
-    if data_inicio:
-        try:
-            start_dt = datetime.fromisoformat(data_inicio).replace(tzinfo=timezone.utc)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="data_inicio inválida. Use YYYY-MM-DD")
-    if data_fim:
-        try:
-            end_dt = datetime.fromisoformat(data_fim).replace(tzinfo=timezone.utc) + timedelta(days=1)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="data_fim inválida. Use YYYY-MM-DD")
-    if start_dt and end_dt and start_dt >= end_dt:
-        raise HTTPException(status_code=400, detail="data_inicio deve ser menor ou igual a data_fim")
-
-    if start_dt or end_dt:
-        period_filtered = []
-        for venda in vendas:
-            venda_dt = parse_venda_data(venda.get("data", ""))
-            if not venda_dt:
-                continue
-            if start_dt and venda_dt < start_dt:
-                continue
-            if end_dt and venda_dt >= end_dt:
-                continue
-            period_filtered.append(venda)
-        filtered_vendas = period_filtered
-    elif mes:
+    if mes:
         filtered_vendas = [v for v in vendas if v.get("data", "").startswith(mes)]
-
-    total_vendas = len(filtered_vendas)
-    valor_total_vendas = sum(v.get("valor_total", 0) for v in filtered_vendas)
-    lucro_estimado_periodo = sum(v.get("lucro_estimado", 0) for v in filtered_vendas)
     
     for venda in filtered_vendas:
         try:
@@ -1095,7 +1011,6 @@ async def loja_dashboard(
         total_clientes=total_clientes,
         total_vendas=total_vendas,
         valor_total_vendas=valor_total_vendas,
-        lucro_estimado_periodo=lucro_estimado_periodo,
         modelos_com_estoque=modelos_com_estoque,
         modelos_sem_estoque=modelos_sem_estoque,
         top_modelos=top_modelos
@@ -1174,12 +1089,6 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
     produtos = await db.produtos.find(query, {"_id": 0}).to_list(1000)
     result = []
     for produto in produtos:
-        if "armazenamento" not in produto:
-            produto["armazenamento"] = produto.get("memoria", "")
-        if "memoria_ram" not in produto:
-            produto["memoria_ram"] = ""
-        if "memoria" not in produto:
-            produto["memoria"] = produto.get("armazenamento", "")
         modelo = await db.modelos.find_one({"id": produto["modelo_id"]}, {"_id": 0})
         modelo_nome = modelo["nome"] if modelo else "Modelo removido"
         result.append(ProdutoWithModelo(**produto, modelo_nome=modelo_nome))
@@ -1188,12 +1097,8 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
 @loja_router.post("/{slug}/produtos", response_model=Produto)
 async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
-    if not produto.cor or not produto.armazenamento or not produto.memoria_ram:
-        raise HTTPException(status_code=400, detail="Cor, armazenamento e memória RAM são obrigatórios")
-    if produto.preco <= 0:
-        raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
-    if produto.valor_compra is None or produto.valor_compra <= 0:
-        raise HTTPException(status_code=400, detail="Valor de compra deve ser maior que zero")
+    if not produto.cor or not produto.memoria:
+        raise HTTPException(status_code=400, detail="Cor e memória são obrigatórios")
     
     modelo = await db.modelos.find_one({"id": produto.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
     if not modelo:
@@ -1201,7 +1106,6 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
     
     produto_obj = Produto(**produto.model_dump(), loja_id=loja["id"])
     doc = produto_obj.model_dump()
-    doc["memoria"] = produto_obj.armazenamento
     doc['created_at'] = doc['created_at'].isoformat()
     await db.produtos.insert_one(doc)
     return produto_obj
@@ -1212,12 +1116,6 @@ async def get_produto(slug: str, produto_id: str, payload: dict = Depends(requir
     produto = await db.produtos.find_one({"id": produto_id, "loja_id": loja["id"]}, {"_id": 0})
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
-    if "armazenamento" not in produto:
-        produto["armazenamento"] = produto.get("memoria", "")
-    if "memoria_ram" not in produto:
-        produto["memoria_ram"] = ""
-    if "memoria" not in produto:
-        produto["memoria"] = produto.get("armazenamento", "")
     modelo = await db.modelos.find_one({"id": produto["modelo_id"]}, {"_id": 0})
     modelo_nome = modelo["nome"] if modelo else "Modelo removido"
     return ProdutoWithModelo(**produto, modelo_nome=modelo_nome)
@@ -1226,16 +1124,8 @@ async def get_produto(slug: str, produto_id: str, payload: dict = Depends(requir
 async def update_produto(slug: str, produto_id: str, produto: ProdutoUpdate, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
     update_data = {k: v for k, v in produto.model_dump().items() if v is not None}
-    if "memoria" in update_data and "armazenamento" not in update_data:
-        update_data["armazenamento"] = update_data["memoria"]
-    if "armazenamento" in update_data:
-        update_data["memoria"] = update_data["armazenamento"]
     if not update_data:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
-    if "preco" in update_data and update_data["preco"] <= 0:
-        raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
-    if "valor_compra" in update_data and update_data["valor_compra"] <= 0:
-        raise HTTPException(status_code=400, detail="Valor de compra deve ser maior que zero")
     
     result = await db.produtos.update_one(
         {"id": produto_id, "loja_id": loja["id"]}, 
@@ -1244,12 +1134,6 @@ async def update_produto(slug: str, produto_id: str, produto: ProdutoUpdate, pay
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     updated = await db.produtos.find_one({"id": produto_id}, {"_id": 0})
-    if "armazenamento" not in updated:
-        updated["armazenamento"] = updated.get("memoria", "")
-    if "memoria_ram" not in updated:
-        updated["memoria_ram"] = ""
-    if "memoria" not in updated:
-        updated["memoria"] = updated.get("armazenamento", "")
     return Produto(**updated)
 
 @loja_router.delete("/{slug}/produtos/{produto_id}")
@@ -1367,43 +1251,6 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     
     itens = []
     valor_total = 0
-    custo_total = 0
-
-    desconto_troca = 0
-    observacao_venda = venda.observacao
-
-    # Se houver troca, cadastra o aparelho recebido no estoque automaticamente.
-    if venda.possui_troca:
-        if not venda.troca:
-            raise HTTPException(status_code=400, detail="Dados da troca são obrigatórios")
-        if not venda.troca.cor.strip() or not venda.troca.armazenamento.strip() or not venda.troca.memoria_ram.strip():
-            raise HTTPException(status_code=400, detail="Cor, armazenamento e memória RAM do aparelho recebido são obrigatórios")
-        if venda.troca.valor_recebido <= 0:
-            raise HTTPException(status_code=400, detail="Valor recebido na troca deve ser maior que zero")
-
-        modelo_troca = await db.modelos.find_one({"id": venda.troca.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
-        if not modelo_troca:
-            raise HTTPException(status_code=404, detail="Modelo do aparelho recebido não encontrado")
-
-        produto_troca = Produto(
-            modelo_id=venda.troca.modelo_id,
-            cor=venda.troca.cor.strip(),
-            armazenamento=venda.troca.armazenamento.strip(),
-            memoria_ram=venda.troca.memoria_ram.strip(),
-            memoria=venda.troca.armazenamento.strip(),
-            bateria=venda.troca.bateria,
-            imei=(venda.troca.imei or "").strip() or None,
-            preco=venda.troca.valor_recebido,
-            valor_compra=venda.troca.valor_recebido,
-            loja_id=loja["id"]
-        )
-        troca_doc = produto_troca.model_dump()
-        troca_doc["created_at"] = troca_doc["created_at"].isoformat()
-        await db.produtos.insert_one(troca_doc)
-
-        desconto_troca = venda.troca.valor_recebido
-        detalhe_troca = f"Troca recebida: {modelo_troca.get('nome', 'Modelo')} {venda.troca.cor} {venda.troca.armazenamento} / {venda.troca.memoria_ram} por R$ {venda.troca.valor_recebido:.2f}."
-        observacao_venda = f"{venda.observacao}\n{detalhe_troca}" if venda.observacao else detalhe_troca
     
     for produto_id in venda.produtos:
         produto = await db.produtos.find_one({"id": produto_id, "loja_id": loja["id"]}, {"_id": 0})
@@ -1420,14 +1267,10 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
             "modelo_id": produto["modelo_id"],
             "modelo_nome": modelo_nome,
             "cor": produto["cor"],
-            "armazenamento": produto.get("armazenamento", produto.get("memoria", "")),
-            "memoria_ram": produto.get("memoria_ram", ""),
-            "memoria": produto.get("memoria", produto.get("armazenamento", "")),
-            "preco": produto["preco"],
-            "valor_compra": produto.get("valor_compra", 0)
+            "memoria": produto["memoria"],
+            "preco": produto["preco"]
         })
         valor_total += produto["preco"]
-        custo_total += produto.get("valor_compra", 0) or 0
     
     for produto_id in venda.produtos:
         await db.produtos.update_one({"id": produto_id}, {"$set": {"vendido": True}})
@@ -1455,32 +1298,19 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     
     # Apply discount
     subtotal = valor_total
-    desconto_manual = venda.desconto if venda.desconto and venda.desconto > 0 else 0
-    desconto = desconto_troca if venda.possui_troca else desconto_manual
-    desconto = desconto if desconto > 0 else None
+    desconto = venda.desconto if venda.desconto and venda.desconto > 0 else None
     if desconto:
         valor_total = max(0, valor_total - desconto)  # Ensure total is not negative
-
-    # Distribui desconto proporcionalmente para estimativa de lucro por item.
-    for item in itens:
-        desconto_item = 0
-        if desconto and subtotal > 0:
-            desconto_item = desconto * (item["preco"] / subtotal)
-        item["lucro_estimado"] = item["preco"] - desconto_item - (item.get("valor_compra", 0) or 0)
-
-    lucro_estimado = valor_total - custo_total
     
     venda_obj = VendaConcluida(
         loja_id=loja["id"],
         itens=json.dumps(itens),
-        custo_total=custo_total,
-        lucro_estimado=lucro_estimado,
         subtotal=subtotal,
         desconto=desconto,
         valor_total=valor_total,
         cliente_id=venda.cliente_id,
         forma_pagamento=venda.forma_pagamento,
-        observacao=observacao_venda,
+        observacao=venda.observacao,
         garantia_meses=venda.garantia_meses,
         garantia_inicio=garantia_inicio,
         garantia_ate=garantia_ate
