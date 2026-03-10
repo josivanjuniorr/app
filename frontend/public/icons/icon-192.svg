@@ -1,13 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="CellControl">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="login-gold" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#D4AF37" />
       <stop offset="100%" stop-color="#B5952F" />
     </linearGradient>
   </defs>
   <rect width="192" height="192" rx="44" fill="#0A0A0A" />
-  <rect x="22" y="22" width="148" height="148" rx="32" fill="url(#bg)" />
-  <rect x="62" y="48" width="68" height="96" rx="14" fill="#0A0A0A" />
-  <circle cx="96" cy="123" r="6" fill="#D4AF37" />
-  <rect x="76" y="58" width="40" height="4" rx="2" fill="#D4AF37" />
+  <rect x="24" y="24" width="144" height="144" rx="32" fill="url(#login-gold)" />
+
+  <!-- Store icon matching login identity -->
+  <path d="M52 80L62 56H130L140 80V86C140 95 133 102 124 102C116 102 110 98 106 92C102 98 96 102 88 102C80 102 74 98 70 92C66 98 60 102 52 102C43 102 36 95 36 86V80H52Z" fill="#0A0A0A" />
+  <path d="M52 104H140V136C140 140 136 144 132 144H60C56 144 52 140 52 136V104Z" fill="#0A0A0A" />
+  <rect x="62" y="114" width="24" height="30" rx="4" fill="url(#login-gold)" />
+  <rect x="94" y="114" width="36" height="16" rx="3" fill="url(#login-gold)" />
 </svg>
