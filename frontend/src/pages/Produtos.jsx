@@ -63,7 +63,8 @@ const Produtos = () => {
   const filteredProdutos = produtos.filter((produto) => {
     const matchesSearch = 
       produto.cor?.toLowerCase().includes(search.toLowerCase()) || 
-      produto.memoria?.toLowerCase().includes(search.toLowerCase()) || 
+      produto.armazenamento?.toLowerCase().includes(search.toLowerCase()) || 
+      produto.memoria_ram?.toLowerCase().includes(search.toLowerCase()) || 
       produto.modelo_nome?.toLowerCase().includes(search.toLowerCase()) ||
       produto.imei?.includes(search);
     const matchesModelo = modeloFilter === "all" || produto.modelo_id === modeloFilter;
@@ -136,7 +137,8 @@ const Produtos = () => {
                   <TableRow className="border-white/5 hover:bg-transparent">
                     <TableHead className="text-gray-400 uppercase text-xs">Modelo</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Cor</TableHead>
-                    <TableHead className="text-gray-400 uppercase text-xs">Memória</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">Armazenamento</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">Memória RAM</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Bateria</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Preço</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Valor Compra</TableHead>
@@ -149,7 +151,8 @@ const Produtos = () => {
                     <TableRow key={produto.id} className="border-white/5 hover:bg-white/5">
                       <TableCell className="text-[#D4AF37] font-medium">{produto.modelo_nome}</TableCell>
                       <TableCell className="text-gray-300">{produto.cor}</TableCell>
-                      <TableCell className="text-gray-300">{produto.memoria}</TableCell>
+                      <TableCell className="text-gray-300">{produto.armazenamento || produto.memoria}</TableCell>
+                      <TableCell className="text-gray-300">{produto.memoria_ram || "-"}</TableCell>
                       <TableCell className="text-gray-300">{produto.bateria ? `${produto.bateria}%` : "-"}</TableCell>
                       <TableCell className="text-green-500 font-semibold">{formatCurrency(produto.preco)}</TableCell>
                       <TableCell className="text-gray-300 font-semibold">{formatCurrency(produto.valor_compra)}</TableCell>

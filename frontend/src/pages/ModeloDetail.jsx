@@ -23,7 +23,8 @@ const ModeloDetail = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [cor, setCor] = useState("");
-  const [memoria, setMemoria] = useState("");
+  const [armazenamento, setArmazenamento] = useState("");
+  const [memoriaRam, setMemoriaRam] = useState("");
   const [bateria, setBateria] = useState("");
   const [imei, setImei] = useState("");
   const [preco, setPreco] = useState("");
@@ -50,7 +51,7 @@ const ModeloDetail = () => {
 
   const handleAddProduto = async (e) => {
     e.preventDefault();
-    if (!cor.trim() || !memoria.trim()) { toast.error("Cor e memória são obrigatórios"); return; }
+    if (!cor.trim() || !armazenamento.trim() || !memoriaRam.trim()) { toast.error("Cor, armazenamento e memória RAM são obrigatórios"); return; }
     const precoNum = parseFloat(preco.replace(",", "."));
     const valorCompraNum = parseFloat(valorCompra.replace(",", "."));
     if (isNaN(precoNum) || precoNum <= 0) { toast.error("Preço inválido"); return; }
@@ -59,11 +60,11 @@ const ModeloDetail = () => {
     setSubmitting(true);
     try {
       await axios.post(`${API}/loja/${lojaSlug}/produtos`, {
-        modelo_id: id, cor: cor.trim(), memoria: memoria.trim(),
+        modelo_id: id, cor: cor.trim(), armazenamento: armazenamento.trim(), memoria_ram: memoriaRam.trim(),
         bateria: bateria ? parseInt(bateria) : null, imei: imei.trim() || null, preco: precoNum, valor_compra: valorCompraNum
       });
       toast.success("Produto cadastrado!");
-      setCor(""); setMemoria(""); setBateria(""); setImei(""); setPreco(""); setValorCompra(""); setShowForm(false);
+      setCor(""); setArmazenamento(""); setMemoriaRam(""); setBateria(""); setImei(""); setPreco(""); setValorCompra(""); setShowForm(false);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao cadastrar");
@@ -113,7 +114,8 @@ const ModeloDetail = () => {
           <CardContent className="p-6">
             <form onSubmit={handleAddProduto} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2"><Label className="text-gray-300">Cor *</Label><Input placeholder="Ex: Preto" value={cor} onChange={(e) => setCor(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-cor" /></div>
-              <div className="space-y-2"><Label className="text-gray-300">Memória *</Label><Input placeholder="Ex: 128GB" value={memoria} onChange={(e) => setMemoria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria" /></div>
+              <div className="space-y-2"><Label className="text-gray-300">Armazenamento *</Label><Input placeholder="Ex: 128GB" value={armazenamento} onChange={(e) => setArmazenamento(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-armazenamento" /></div>
+              <div className="space-y-2"><Label className="text-gray-300">Memória RAM *</Label><Input placeholder="Ex: 8GB" value={memoriaRam} onChange={(e) => setMemoriaRam(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-memoria-ram" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" placeholder="Ex: 100" value={bateria} onChange={(e) => setBateria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-bateria" /></div>
               <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input placeholder="Ex: 123456789" value={imei} onChange={(e) => setImei(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-imei" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Preço *</Label><Input placeholder="Ex: 5999" value={preco} onChange={(e) => setPreco(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-preco" /></div>
@@ -136,7 +138,8 @@ const ModeloDetail = () => {
             <Table>
               <TableHeader><TableRow className="border-white/5 hover:bg-transparent">
                 <TableHead className="text-gray-400 uppercase text-xs">Cor</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs">Memória</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs">Armazenamento</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs">Memória RAM</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Bateria</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">IMEI</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Preço</TableHead>
@@ -147,7 +150,8 @@ const ModeloDetail = () => {
                 {produtos.map((produto) => (
                   <TableRow key={produto.id} className="border-white/5 hover:bg-white/5">
                     <TableCell className="text-gray-300">{produto.cor}</TableCell>
-                    <TableCell className="text-gray-300">{produto.memoria}</TableCell>
+                    <TableCell className="text-gray-300">{produto.armazenamento || produto.memoria}</TableCell>
+                    <TableCell className="text-gray-300">{produto.memoria_ram || "-"}</TableCell>
                     <TableCell className="text-gray-300">{produto.bateria ? `${produto.bateria}%` : "-"}</TableCell>
                     <TableCell className="text-gray-400 text-sm font-mono">{produto.imei || "-"}</TableCell>
                     <TableCell className="text-[#D4AF37] font-semibold">{formatCurrency(produto.preco)}</TableCell>

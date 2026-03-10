@@ -12,6 +12,7 @@ import {
   TrendingUp, 
   AlertTriangle,
   DollarSign,
+  Calendar,
   ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,17 +24,20 @@ const Dashboard = () => {
   
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mesSelecionado, setMesSelecionado] = useState("");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
     if (lojaSlug) {
       fetchDashboard();
     }
-  }, [lojaSlug, mesSelecionado]);
+  }, [lojaSlug, dataInicio, dataFim]);
 
   const fetchDashboard = async () => {
     try {
-      const params = mesSelecionado ? { mes: mesSelecionado } : {};
+      const params = {};
+      if (dataInicio) params.data_inicio = dataInicio;
+      if (dataFim) params.data_fim = dataFim;
       const response = await axios.get(`${API}/loja/${lojaSlug}/dashboard`, { params });
       setStats(response.data);
     } catch (error) {
@@ -51,16 +55,17 @@ const Dashboard = () => {
     }).format(value || 0);
   };
 
-  const getMonthOptions = () => {
-    const options = [];
+  const handlePeriodoAtual = () => {
     const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      options.push({ value, label });
-    }
-    return options;
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const fmt = (d) => d.toISOString().split("T")[0];
+    setDataInicio(fmt(firstDay));
+    setDataFim(fmt(now));
+  };
+
+  const limparPeriodo = () => {
+    setDataInicio("");
+    setDataFim("");
   };
 
   if (loading) {
@@ -79,7 +84,15 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-white font-['Outfit']">Dashboard</h1>
           <p className="text-gray-400 mt-1">Visão geral da sua loja</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 bg-[#141414] border border-white/10 rounded-lg px-3 py-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="bg-transparent text-gray-300 text-sm outline-none" data-testid="periodo-inicio" />
+            <span className="text-gray-500 text-xs">até</span>
+            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="bg-transparent text-gray-300 text-sm outline-none" data-testid="periodo-fim" />
+          </div>
+          <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" onClick={handlePeriodoAtual} data-testid="btn-periodo-atual">Mês Atual</Button>
+          <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5" onClick={limparPeriodo} data-testid="btn-limpar-periodo">Limpar</Button>
           <Link to={`/${lojaSlug}/modelos`}>
             <Button className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-modelos">
               <Smartphone className="w-4 h-4 mr-2" />
@@ -102,7 +115,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card className="bg-[#141414] border border-white/5 hover:border-[#D4AF37]/30 transition-colors">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -158,6 +171,20 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-[#141414] border border-white/5 hover:border-green-500/30 transition-colors">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Lucro Est. Período</p>
+                <p className="text-2xl font-bold text-green-500 mt-2">{formatCurrency(stats?.lucro_estimado_periodo)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Grid */}
@@ -202,17 +229,7 @@ const Dashboard = () => {
                 </div>
                 <CardTitle className="text-lg font-semibold text-white">Mais Vendidos</CardTitle>
               </div>
-              <select
-                value={mesSelecionado}
-                onChange={(e) => setMesSelecionado(e.target.value)}
-                className="bg-[#0A0A0A] border border-white/10 rounded-md px-3 py-1.5 text-sm text-gray-300 focus:border-[#D4AF37] focus:outline-none"
-                data-testid="month-filter"
-              >
-                <option value="">Todos</option>
-                {getMonthOptions().map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              <span className="text-xs text-gray-500">Considera o período selecionado acima</span>
             </div>
           </CardHeader>
           <CardContent className="p-6">

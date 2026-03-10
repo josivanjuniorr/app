@@ -266,7 +266,8 @@ const VendaDetail = () => {
               <TableHeader><TableRow className="border-white/5 hover:bg-transparent">
                 <TableHead className="text-gray-400 uppercase text-xs">Modelo</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Cor</TableHead>
-                <TableHead className="text-gray-400 uppercase text-xs">Memória</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs">Armazenamento</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs">Memória RAM</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs text-right">Valor Compra</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs text-right">Preço</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs text-right">Lucro Est.</TableHead>
@@ -276,14 +277,15 @@ const VendaDetail = () => {
                   <TableRow key={index} className="border-white/5 hover:bg-white/5">
                     <TableCell className="text-[#D4AF37] font-medium">{item.modelo_nome}</TableCell>
                     <TableCell className="text-gray-300">{item.cor}</TableCell>
-                    <TableCell className="text-gray-300">{item.memoria}</TableCell>
+                    <TableCell className="text-gray-300">{item.armazenamento || item.memoria}</TableCell>
+                    <TableCell className="text-gray-300">{item.memoria_ram || "-"}</TableCell>
                     <TableCell className="text-gray-300 font-semibold text-right">{formatCurrency(item.valor_compra)}</TableCell>
                     <TableCell className="text-green-500 font-semibold text-right">{formatCurrency(item.preco)}</TableCell>
                     <TableCell className="text-[#D4AF37] font-semibold text-right">{formatCurrency(item.lucro_estimado)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="border-white/5 bg-white/5">
-                  <TableCell colSpan={5} className="text-right text-gray-400 uppercase text-sm font-semibold">Total</TableCell>
+                  <TableCell colSpan={6} className="text-right text-gray-400 uppercase text-sm font-semibold">Total</TableCell>
                   <TableCell className="text-[#D4AF37] font-bold text-lg text-right">{formatCurrency(venda.valor_total)}</TableCell>
                 </TableRow>
               </TableBody>

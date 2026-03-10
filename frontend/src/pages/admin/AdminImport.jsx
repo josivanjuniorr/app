@@ -116,7 +116,7 @@ const AdminImport = () => {
       content = 'nome,cpf,whatsapp,email,endereco\nJoão Silva,123.456.789-00,(11) 99999-8888,joao@email.com,Rua Exemplo 123';
       filename = 'template_clientes.csv';
     } else if (type === 'produtos') {
-      content = 'modelo,cor,memoria,bateria,imei,preco,valor_compra\niPhone 15,Preto,128GB,95%,123456789012345,4500.00,3900.00';
+      content = 'modelo,cor,armazenamento,memoria_ram,bateria,imei,preco,valor_compra\niPhone 15,Preto,128GB,8GB,95%,123456789012345,4500.00,3900.00';
       filename = 'template_produtos.csv';
     } else if (type === 'vendas') {
       content = 'cliente_nome,cliente_cpf,valor_total,forma_pagamento,data,modelo,cor,observacao\nJoão Silva,123.456.789-00,4500.00,pix,15/01/2025,iPhone 15,Preto,Venda importada';
@@ -441,7 +441,7 @@ const AdminImport = () => {
               </div>
               <div>
                 <p className="text-green-400 font-medium mb-1">Produtos:</p>
-                <p className="text-gray-400">id, modelo_id, cor, memoria, bateria, imei, preco, valor_compra, vendido</p>
+                <p className="text-gray-400">id, modelo_id, cor, armazenamento, memoria_ram, bateria, imei, preco, valor_compra, vendido</p>
               </div>
               <div>
                 <p className="text-yellow-400 font-medium mb-1">Vendas:</p>

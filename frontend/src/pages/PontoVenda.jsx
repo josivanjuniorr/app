@@ -35,7 +35,8 @@ const PontoVenda = () => {
   const [possuiTroca, setPossuiTroca] = useState(false);
   const [trocaModeloId, setTrocaModeloId] = useState("");
   const [trocaCor, setTrocaCor] = useState("");
-  const [trocaMemoria, setTrocaMemoria] = useState("");
+  const [trocaArmazenamento, setTrocaArmazenamento] = useState("");
+  const [trocaMemoriaRam, setTrocaMemoriaRam] = useState("");
   const [trocaBateria, setTrocaBateria] = useState("");
   const [trocaImei, setTrocaImei] = useState("");
   const [trocaValorRecebido, setTrocaValorRecebido] = useState("");
@@ -65,7 +66,12 @@ const PontoVenda = () => {
     return produtos.filter((p) => {
       const s = searchProduto.toLowerCase();
       const notSelected = !selectedProdutos.some(sp => sp.id === p.id);
-      return notSelected && (p.modelo_nome?.toLowerCase().includes(s) || p.cor.toLowerCase().includes(s) || p.memoria.toLowerCase().includes(s));
+      return notSelected && (
+        p.modelo_nome?.toLowerCase().includes(s) ||
+        p.cor.toLowerCase().includes(s) ||
+        (p.armazenamento || p.memoria || "").toLowerCase().includes(s) ||
+        (p.memoria_ram || "").toLowerCase().includes(s)
+      );
     });
   }, [produtos, searchProduto, selectedProdutos]);
 
@@ -92,7 +98,7 @@ const PontoVenda = () => {
     if (possuiTroca) {
       const valorRecebido = parseFloat(trocaValorRecebido);
       if (!trocaModeloId) { toast.error("Selecione o modelo do aparelho recebido"); return; }
-      if (!trocaCor.trim() || !trocaMemoria.trim()) { toast.error("Cor e memória da troca são obrigatórios"); return; }
+      if (!trocaCor.trim() || !trocaArmazenamento.trim() || !trocaMemoriaRam.trim()) { toast.error("Cor, armazenamento e memória RAM da troca são obrigatórios"); return; }
       if (isNaN(valorRecebido) || valorRecebido <= 0) { toast.error("Informe um valor recebido válido para a troca"); return; }
     }
 
@@ -110,7 +116,8 @@ const PontoVenda = () => {
         troca: possuiTroca ? {
           modelo_id: trocaModeloId,
           cor: trocaCor.trim(),
-          memoria: trocaMemoria.trim(),
+          armazenamento: trocaArmazenamento.trim(),
+          memoria_ram: trocaMemoriaRam.trim(),
           bateria: trocaBateria ? parseInt(trocaBateria) : null,
           imei: trocaImei.trim() || null,
           valor_recebido: parseFloat(trocaValorRecebido)
@@ -143,7 +150,7 @@ const PontoVenda = () => {
               <div className="max-h-[400px] overflow-y-auto space-y-2">
                 {filteredProdutos.length > 0 ? filteredProdutos.map((produto) => (
                   <div key={produto.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5 hover:border-[#D4AF37]/30 transition-colors">
-                    <div className="flex-1"><p className="text-[#D4AF37] font-medium">{produto.modelo_nome}</p><p className="text-sm text-gray-400">{produto.cor} • {produto.memoria}{produto.bateria && ` • ${produto.bateria}%`}</p></div>
+                    <div className="flex-1"><p className="text-[#D4AF37] font-medium">{produto.modelo_nome}</p><p className="text-sm text-gray-400">{produto.cor} • {produto.armazenamento || produto.memoria} • {produto.memoria_ram || "RAM n/i"}{produto.bateria && ` • ${produto.bateria}%`}</p></div>
                     <div className="flex items-center gap-3"><span className="text-green-500 font-semibold">{formatCurrency(produto.preco)}</span><Button size="sm" onClick={() => setSelectedProdutos([...selectedProdutos, produto])} className="bg-[#D4AF37] text-black hover:bg-[#B5952F]" data-testid={`add-produto-${produto.id}`}><Plus className="w-4 h-4" /></Button></div>
                   </div>
                 )) : <p className="text-center text-gray-500 py-8">Nenhum produto disponível</p>}
@@ -177,7 +184,7 @@ const PontoVenda = () => {
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {selectedProdutos.map((p) => (
                     <div key={p.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
-                      <div className="flex-1 min-w-0"><p className="text-white font-medium truncate">{p.modelo_nome}</p><p className="text-sm text-gray-400 truncate">{p.cor} • {p.memoria}</p></div>
+                      <div className="flex-1 min-w-0"><p className="text-white font-medium truncate">{p.modelo_nome}</p><p className="text-sm text-gray-400 truncate">{p.cor} • {p.armazenamento || p.memoria} • {p.memoria_ram || "RAM n/i"}</p></div>
                       <div className="flex items-center gap-2"><span className="text-green-500 font-semibold text-sm">{formatCurrency(p.preco)}</span><Button size="sm" variant="ghost" onClick={() => setSelectedProdutos(selectedProdutos.filter(sp => sp.id !== p.id))} className="text-gray-400 hover:text-red-400 p-1" data-testid={`remove-produto-${p.id}`}><X className="w-4 h-4" /></Button></div>
                     </div>
                   ))}
@@ -275,7 +282,8 @@ const PontoVenda = () => {
                       </Select>
                     </div>
                     <div className="space-y-2"><Label className="text-gray-300">Cor *</Label><Input value={trocaCor} onChange={(e) => setTrocaCor(e.target.value)} placeholder="Ex: Preto" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-cor" /></div>
-                    <div className="space-y-2"><Label className="text-gray-300">Memória *</Label><Input value={trocaMemoria} onChange={(e) => setTrocaMemoria(e.target.value)} placeholder="Ex: 128GB" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-memoria" /></div>
+                    <div className="space-y-2"><Label className="text-gray-300">Armazenamento *</Label><Input value={trocaArmazenamento} onChange={(e) => setTrocaArmazenamento(e.target.value)} placeholder="Ex: 128GB" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-armazenamento" /></div>
+                    <div className="space-y-2"><Label className="text-gray-300">Memória RAM *</Label><Input value={trocaMemoriaRam} onChange={(e) => setTrocaMemoriaRam(e.target.value)} placeholder="Ex: 8GB" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-memoria-ram" /></div>
                     <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" value={trocaBateria} onChange={(e) => setTrocaBateria(e.target.value)} placeholder="Ex: 85" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-bateria" /></div>
                     <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input value={trocaImei} onChange={(e) => setTrocaImei(e.target.value)} placeholder="Ex: 123456789" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-imei" /></div>
                     <div className="space-y-2 md:col-span-2"><Label className="text-gray-300">Valor recebido na troca (R$) *</Label><Input type="number" min="0" step="0.01" value={trocaValorRecebido} onChange={(e) => setTrocaValorRecebido(e.target.value)} placeholder="Ex: 1500" className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-troca-valor" /></div>
