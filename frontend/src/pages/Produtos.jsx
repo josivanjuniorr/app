@@ -139,6 +139,8 @@ const Produtos = () => {
                     <TableHead className="text-gray-400 uppercase text-xs">Memória</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Bateria</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs">Preço</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">Valor Compra</TableHead>
+                    <TableHead className="text-gray-400 uppercase text-xs">Lucro Est.</TableHead>
                     <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -150,6 +152,8 @@ const Produtos = () => {
                       <TableCell className="text-gray-300">{produto.memoria}</TableCell>
                       <TableCell className="text-gray-300">{produto.bateria ? `${produto.bateria}%` : "-"}</TableCell>
                       <TableCell className="text-green-500 font-semibold">{formatCurrency(produto.preco)}</TableCell>
+                      <TableCell className="text-gray-300 font-semibold">{formatCurrency(produto.valor_compra)}</TableCell>
+                      <TableCell className="text-[#D4AF37] font-semibold">{formatCurrency((produto.preco || 0) - (produto.valor_compra || 0))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link to={`/${lojaSlug}/produtos/editar/${produto.id}`}>

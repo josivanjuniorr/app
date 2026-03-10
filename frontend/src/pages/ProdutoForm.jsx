@@ -24,6 +24,7 @@ const ProdutoForm = () => {
   const [bateria, setBateria] = useState("");
   const [imei, setImei] = useState("");
   const [preco, setPreco] = useState("");
+  const [valorCompra, setValorCompra] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -54,6 +55,7 @@ const ProdutoForm = () => {
       setBateria(p.bateria?.toString() || "");
       setImei(p.imei || "");
       setPreco(p.preco?.toString().replace(".", ",") || "");
+      setValorCompra((p.valor_compra ?? "").toString().replace(".", ","));
     } catch (error) {
       toast.error("Erro ao carregar produto");
       navigate(`/${lojaSlug}/produtos`);
@@ -66,12 +68,21 @@ const ProdutoForm = () => {
     e.preventDefault();
     if (!cor.trim() || !memoria.trim()) { toast.error("Cor e memória são obrigatórios"); return; }
     const precoNum = parseFloat(preco.replace(",", "."));
+    const valorCompraNum = parseFloat(valorCompra.replace(",", "."));
     if (isNaN(precoNum) || precoNum <= 0) { toast.error("Preço inválido"); return; }
+    if (isNaN(valorCompraNum) || valorCompraNum <= 0) { toast.error("Valor de compra inválido"); return; }
     if (!isEditing && !modeloId) { toast.error("Selecione um modelo"); return; }
 
     setLoading(true);
     try {
-      const data = { cor: cor.trim(), memoria: memoria.trim(), bateria: bateria ? parseInt(bateria) : null, imei: imei.trim() || null, preco: precoNum };
+      const data = {
+        cor: cor.trim(),
+        memoria: memoria.trim(),
+        bateria: bateria ? parseInt(bateria) : null,
+        imei: imei.trim() || null,
+        preco: precoNum,
+        valor_compra: valorCompraNum
+      };
       if (isEditing) {
         await axios.put(`${API}/loja/${lojaSlug}/produtos/${id}`, data);
         toast.success("Produto atualizado!");
@@ -118,6 +129,7 @@ const ProdutoForm = () => {
               <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" placeholder="Ex: 100" value={bateria} onChange={(e) => setBateria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-bateria" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Preço *</Label><Input placeholder="Ex: 5999" value={preco} onChange={(e) => setPreco(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-preco" /></div>
             </div>
+            <div className="space-y-2"><Label className="text-gray-300">Valor de Compra *</Label><Input placeholder="Ex: 4500" value={valorCompra} onChange={(e) => setValorCompra(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-valor-compra" /></div>
             <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input placeholder="Ex: 123456789" value={imei} onChange={(e) => setImei(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-imei" /></div>
             <div className="flex gap-3 pt-4">
               <Button type="submit" disabled={loading} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-salvar-produto"><Save className="w-4 h-4 mr-2" />{loading ? "Salvando..." : "Salvar"}</Button>

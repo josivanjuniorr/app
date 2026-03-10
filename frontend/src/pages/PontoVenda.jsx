@@ -66,8 +66,10 @@ const PontoVenda = () => {
   }, [clientes, searchCliente]);
 
   const total = useMemo(() => selectedProdutos.reduce((sum, p) => sum + p.preco, 0), [selectedProdutos]);
+  const custoTotal = useMemo(() => selectedProdutos.reduce((sum, p) => sum + (p.valor_compra || 0), 0), [selectedProdutos]);
   const descontoValue = useMemo(() => parseFloat(desconto) || 0, [desconto]);
   const totalComDesconto = useMemo(() => Math.max(0, total - descontoValue), [total, descontoValue]);
+  const lucroEstimado = useMemo(() => totalComDesconto - custoTotal, [totalComDesconto, custoTotal]);
 
   const handleSubmit = async () => {
     if (!selectedCliente) { toast.error("Selecione um cliente"); return; }
@@ -236,6 +238,16 @@ const PontoVenda = () => {
                     </div>
                   </div>
                 )}
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 text-sm">Custo total</span>
+                    <span className="text-gray-400">{formatCurrency(custoTotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#D4AF37] text-sm">Lucro estimado</span>
+                    <span className="text-[#D4AF37]">{formatCurrency(lucroEstimado)}</span>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-gray-400 uppercase text-sm tracking-wider">Total</span>
                   <span className="text-2xl font-bold text-[#D4AF37]" data-testid="total-value">{formatCurrency(totalComDesconto)}</span>

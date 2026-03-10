@@ -27,6 +27,7 @@ const ModeloDetail = () => {
   const [bateria, setBateria] = useState("");
   const [imei, setImei] = useState("");
   const [preco, setPreco] = useState("");
+  const [valorCompra, setValorCompra] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { if (lojaSlug && id) fetchData(); }, [lojaSlug, id]);
@@ -51,16 +52,18 @@ const ModeloDetail = () => {
     e.preventDefault();
     if (!cor.trim() || !memoria.trim()) { toast.error("Cor e memória são obrigatórios"); return; }
     const precoNum = parseFloat(preco.replace(",", "."));
+    const valorCompraNum = parseFloat(valorCompra.replace(",", "."));
     if (isNaN(precoNum) || precoNum <= 0) { toast.error("Preço inválido"); return; }
+    if (isNaN(valorCompraNum) || valorCompraNum <= 0) { toast.error("Valor de compra inválido"); return; }
 
     setSubmitting(true);
     try {
       await axios.post(`${API}/loja/${lojaSlug}/produtos`, {
         modelo_id: id, cor: cor.trim(), memoria: memoria.trim(),
-        bateria: bateria ? parseInt(bateria) : null, imei: imei.trim() || null, preco: precoNum
+        bateria: bateria ? parseInt(bateria) : null, imei: imei.trim() || null, preco: precoNum, valor_compra: valorCompraNum
       });
       toast.success("Produto cadastrado!");
-      setCor(""); setMemoria(""); setBateria(""); setImei(""); setPreco(""); setShowForm(false);
+      setCor(""); setMemoria(""); setBateria(""); setImei(""); setPreco(""); setValorCompra(""); setShowForm(false);
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao cadastrar");
@@ -114,6 +117,7 @@ const ModeloDetail = () => {
               <div className="space-y-2"><Label className="text-gray-300">Bateria (%)</Label><Input type="number" placeholder="Ex: 100" value={bateria} onChange={(e) => setBateria(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-bateria" /></div>
               <div className="space-y-2"><Label className="text-gray-300">IMEI</Label><Input placeholder="Ex: 123456789" value={imei} onChange={(e) => setImei(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-imei" /></div>
               <div className="space-y-2"><Label className="text-gray-300">Preço *</Label><Input placeholder="Ex: 5999" value={preco} onChange={(e) => setPreco(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-preco" /></div>
+              <div className="space-y-2"><Label className="text-gray-300">Valor de Compra *</Label><Input placeholder="Ex: 4500" value={valorCompra} onChange={(e) => setValorCompra(e.target.value)} className="bg-[#0A0A0A] border-white/10 text-white" data-testid="input-valor-compra" /></div>
               <div className="flex items-end gap-2">
                 <Button type="submit" disabled={submitting} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-salvar-produto">{submitting ? "Salvando..." : "Salvar"}</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="border-white/10 text-gray-300 hover:bg-white/5">Cancelar</Button>
@@ -136,6 +140,7 @@ const ModeloDetail = () => {
                 <TableHead className="text-gray-400 uppercase text-xs">Bateria</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">IMEI</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Preço</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs">Valor Compra</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs text-right">Ações</TableHead>
               </TableRow></TableHeader>
               <TableBody>
@@ -146,6 +151,7 @@ const ModeloDetail = () => {
                     <TableCell className="text-gray-300">{produto.bateria ? `${produto.bateria}%` : "-"}</TableCell>
                     <TableCell className="text-gray-400 text-sm font-mono">{produto.imei || "-"}</TableCell>
                     <TableCell className="text-[#D4AF37] font-semibold">{formatCurrency(produto.preco)}</TableCell>
+                    <TableCell className="text-gray-300 font-semibold">{formatCurrency(produto.valor_compra)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link to={`/${lojaSlug}/produtos/editar/${produto.id}`}><Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"><Edit className="w-4 h-4" /></Button></Link>

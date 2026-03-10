@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText, Edit, Trash2, X, Save, Shield, Percent } from "lucide-react";
+import { Receipt, ArrowLeft, Printer, Calendar, User, CreditCard, Package, DollarSign, FileText, Edit, Trash2, X, Save, Shield, Percent, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 const VendaDetail = () => {
@@ -163,7 +163,7 @@ const VendaDetail = () => {
           <p>Comprovante de Venda</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"><Calendar className="w-5 h-5 text-blue-500" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Data</p><p className="text-white font-medium">{formatDate(venda.data)}</p></div></div></CardContent></Card>
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><User className="w-5 h-5 text-green-500" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Cliente</p><p className="text-white font-medium">{venda.cliente_nome}</p></div></div></CardContent></Card>
           
@@ -196,6 +196,8 @@ const VendaDetail = () => {
           </Card>
           
           <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-[#D4AF37]" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Total</p><p className="text-[#D4AF37] font-bold text-lg">{formatCurrency(venda.valor_total)}</p></div></div></CardContent></Card>
+          <Card className="bg-[#141414] border border-white/5"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-gray-500/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-gray-400" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Custo Total</p><p className="text-gray-300 font-bold text-lg">{formatCurrency(venda.custo_total)}</p></div></div></CardContent></Card>
+          <Card className="bg-[#141414] border border-green-500/20"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-green-500" /></div><div><p className="text-xs text-gray-500 uppercase tracking-wider">Lucro Est.</p><p className="text-green-500 font-bold text-lg">{formatCurrency(venda.lucro_estimado)}</p></div></div></CardContent></Card>
         </div>
 
         {/* Garantia e Desconto */}
@@ -265,7 +267,9 @@ const VendaDetail = () => {
                 <TableHead className="text-gray-400 uppercase text-xs">Modelo</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Cor</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs">Memória</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs text-right">Valor Compra</TableHead>
                 <TableHead className="text-gray-400 uppercase text-xs text-right">Preço</TableHead>
+                <TableHead className="text-gray-400 uppercase text-xs text-right">Lucro Est.</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {venda.itens_parsed?.map((item, index) => (
@@ -273,11 +277,13 @@ const VendaDetail = () => {
                     <TableCell className="text-[#D4AF37] font-medium">{item.modelo_nome}</TableCell>
                     <TableCell className="text-gray-300">{item.cor}</TableCell>
                     <TableCell className="text-gray-300">{item.memoria}</TableCell>
+                    <TableCell className="text-gray-300 font-semibold text-right">{formatCurrency(item.valor_compra)}</TableCell>
                     <TableCell className="text-green-500 font-semibold text-right">{formatCurrency(item.preco)}</TableCell>
+                    <TableCell className="text-[#D4AF37] font-semibold text-right">{formatCurrency(item.lucro_estimado)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="border-white/5 bg-white/5">
-                  <TableCell colSpan={3} className="text-right text-gray-400 uppercase text-sm font-semibold">Total</TableCell>
+                  <TableCell colSpan={5} className="text-right text-gray-400 uppercase text-sm font-semibold">Total</TableCell>
                   <TableCell className="text-[#D4AF37] font-bold text-lg text-right">{formatCurrency(venda.valor_total)}</TableCell>
                 </TableRow>
               </TableBody>

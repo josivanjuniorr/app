@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Search, Eye, Calendar, DollarSign, ArrowUpDown } from "lucide-react";
+import { Receipt, Search, Eye, Calendar, DollarSign, ArrowUpDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/Pagination";
 
@@ -92,6 +92,7 @@ const Vendas = () => {
   );
 
   const totalVendas = filteredVendas.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+  const totalLucroEstimado = filteredVendas.reduce((sum, v) => sum + (v.lucro_estimado || 0), 0);
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="text-[#D4AF37]">Carregando...</div></div>;
 
@@ -105,15 +106,26 @@ const Vendas = () => {
             <p className="text-sm text-gray-400">{filteredVendas.length} vendas encontradas</p>
           </div>
         </div>
-        <Card className="bg-[#141414] border border-white/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-[#D4AF37]" /></div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider">Total</p>
-              <p className="text-lg font-bold text-[#D4AF37]">{formatCurrency(totalVendas)}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Card className="bg-[#141414] border border-white/5">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-[#D4AF37]" /></div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Total</p>
+                <p className="text-lg font-bold text-[#D4AF37]">{formatCurrency(totalVendas)}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#141414] border border-white/5">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-green-500" /></div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Lucro Est.</p>
+                <p className="text-lg font-bold text-green-500">{formatCurrency(totalLucroEstimado)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card className="bg-[#141414] border border-white/5">
@@ -150,6 +162,7 @@ const Vendas = () => {
                       <TableHead onClick={() => handleSort("valor")} className="cursor-pointer text-gray-400 uppercase text-xs whitespace-nowrap">
                         <div className="flex items-center gap-2">Valor {renderSortIcon("valor")}</div>
                       </TableHead>
+                      <TableHead className="text-gray-400 uppercase text-xs whitespace-nowrap hidden lg:table-cell">Lucro Est.</TableHead>
                       <TableHead className="text-gray-400 uppercase text-xs text-right whitespace-nowrap">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -170,6 +183,7 @@ const Vendas = () => {
                         </TableCell>
                         <TableCell className="text-gray-400 whitespace-nowrap hidden sm:table-cell">{formatPayment(venda.forma_pagamento)}</TableCell>
                         <TableCell className="text-[#D4AF37] font-semibold whitespace-nowrap">{formatCurrency(venda.valor_total)}</TableCell>
+                        <TableCell className="text-green-500 font-semibold whitespace-nowrap hidden lg:table-cell">{formatCurrency(venda.lucro_estimado)}</TableCell>
                         <TableCell className="text-right whitespace-nowrap">
                           <Link to={`/${lojaSlug}/vendas/${venda.id}`}>
                             <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10" data-testid={`btn-view-${venda.id}`}>

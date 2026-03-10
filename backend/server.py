@@ -135,6 +135,7 @@ class ProdutoBase(BaseModel):
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: float
+    valor_compra: Optional[float] = 0
 
 class ProdutoCreate(ProdutoBase):
     pass
@@ -145,6 +146,7 @@ class ProdutoUpdate(BaseModel):
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: Optional[float] = None
+    valor_compra: Optional[float] = None
 
 class Produto(ProdutoBase):
     model_config = ConfigDict(extra="ignore")
@@ -191,6 +193,8 @@ class VendaItem(BaseModel):
     cor: Optional[str] = ""
     memoria: Optional[str] = ""
     preco: float
+    valor_compra: Optional[float] = 0
+    lucro_estimado: Optional[float] = None
 
 class VendaCreate(BaseModel):
     cliente_id: str
@@ -208,6 +212,8 @@ class VendaConcluida(BaseModel):
     data: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     itens: str
     valor_total: float
+    custo_total: Optional[float] = None
+    lucro_estimado: Optional[float] = None
     subtotal: Optional[float] = None  # Total before discount
     desconto: Optional[float] = None  # Discount value in BRL
     cliente_id: str
@@ -643,6 +649,7 @@ async def import_data(
                 bateria = str(record.get('bateria', record.get('saude_bateria', ''))).strip()
                 imei = record.get('imei', '').strip()
                 preco = record.get('preco', record.get('valor', 0))
+                valor_compra = record.get('valor_compra', record.get('custo', preco))
                 vendido = str(record.get('vendido', 'false')).lower() in ['true', '1', 'yes', 'sim']
                 
                 # Try to get modelo_id from mapping or by name
@@ -678,6 +685,11 @@ async def import_data(
                     preco = float(str(preco).replace('R$', '').replace(',', '.').strip())
                 except:
                     preco = 0.0
+
+                try:
+                    valor_compra = float(str(valor_compra).replace('R$', '').replace(',', '.').strip())
+                except:
+                    valor_compra = preco
                 
                 # Convert bateria to string
                 if bateria:
@@ -695,6 +707,7 @@ async def import_data(
                     "bateria": bateria,
                     "imei": imei,
                     "preco": preco,
+                    "valor_compra": valor_compra,
                     "vendido": vendido,
                     "loja_id": loja_id,
                     "created_at": datetime.now(timezone.utc).isoformat()
@@ -1099,6 +1112,10 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
     loja = await verify_loja_access(slug, payload)
     if not produto.cor or not produto.memoria:
         raise HTTPException(status_code=400, detail="Cor e memória são obrigatórios")
+    if produto.preco <= 0:
+        raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
+    if produto.valor_compra is None or produto.valor_compra <= 0:
+        raise HTTPException(status_code=400, detail="Valor de compra deve ser maior que zero")
     
     modelo = await db.modelos.find_one({"id": produto.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
     if not modelo:
@@ -1126,6 +1143,10 @@ async def update_produto(slug: str, produto_id: str, produto: ProdutoUpdate, pay
     update_data = {k: v for k, v in produto.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+    if "preco" in update_data and update_data["preco"] <= 0:
+        raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
+    if "valor_compra" in update_data and update_data["valor_compra"] <= 0:
+        raise HTTPException(status_code=400, detail="Valor de compra deve ser maior que zero")
     
     result = await db.produtos.update_one(
         {"id": produto_id, "loja_id": loja["id"]}, 
@@ -1251,6 +1272,7 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     
     itens = []
     valor_total = 0
+    custo_total = 0
     
     for produto_id in venda.produtos:
         produto = await db.produtos.find_one({"id": produto_id, "loja_id": loja["id"]}, {"_id": 0})
@@ -1268,9 +1290,11 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
             "modelo_nome": modelo_nome,
             "cor": produto["cor"],
             "memoria": produto["memoria"],
-            "preco": produto["preco"]
+            "preco": produto["preco"],
+            "valor_compra": produto.get("valor_compra", 0)
         })
         valor_total += produto["preco"]
+        custo_total += produto.get("valor_compra", 0) or 0
     
     for produto_id in venda.produtos:
         await db.produtos.update_one({"id": produto_id}, {"$set": {"vendido": True}})
@@ -1301,10 +1325,21 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
     desconto = venda.desconto if venda.desconto and venda.desconto > 0 else None
     if desconto:
         valor_total = max(0, valor_total - desconto)  # Ensure total is not negative
+
+    # Distribui desconto proporcionalmente para estimativa de lucro por item.
+    for item in itens:
+        desconto_item = 0
+        if desconto and subtotal > 0:
+            desconto_item = desconto * (item["preco"] / subtotal)
+        item["lucro_estimado"] = item["preco"] - desconto_item - (item.get("valor_compra", 0) or 0)
+
+    lucro_estimado = valor_total - custo_total
     
     venda_obj = VendaConcluida(
         loja_id=loja["id"],
         itens=json.dumps(itens),
+        custo_total=custo_total,
+        lucro_estimado=lucro_estimado,
         subtotal=subtotal,
         desconto=desconto,
         valor_total=valor_total,
