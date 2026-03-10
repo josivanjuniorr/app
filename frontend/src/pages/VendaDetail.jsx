@@ -57,6 +57,118 @@ const VendaDetail = () => {
     window.print();
   };
 
+  const escapeHtml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const handleThermalPrint = () => {
+    if (!venda) return;
+
+    const itensHtml = (venda.itens_parsed || [])
+      .map((item) => {
+        const nome = escapeHtml(item.modelo_nome || "Item");
+        const detalhes = [item.cor, item.memoria].filter(Boolean).map(escapeHtml).join(" | ");
+        const preco = escapeHtml(formatCurrency(item.preco));
+        return `
+          <div class="item">
+            <div class="item-name">${nome}</div>
+            <div class="item-line">
+              <span>${detalhes || "-"}</span>
+              <strong>${preco}</strong>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    const garantiaInfo = venda.garantia_meses > 0
+      ? `<div class="line"><span>Garantia:</span><span>${escapeHtml(`${venda.garantia_meses} ${venda.garantia_meses === 1 ? "mes" : "meses"}`)}</span></div>`
+      : "";
+
+    const descontoInfo = venda.desconto > 0
+      ? `<div class="line"><span>Desconto:</span><span>- ${escapeHtml(formatCurrency(venda.desconto))}</span></div>`
+      : "";
+
+    const html = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Recibo ${escapeHtml(venda.id)}</title>
+          <style>
+            @page { size: 80mm auto; margin: 2mm; }
+            body {
+              margin: 0;
+              font-family: 'Courier New', monospace;
+              color: #000;
+              width: 76mm;
+              font-size: 11px;
+              line-height: 1.35;
+            }
+            .receipt { padding: 4px 2px; }
+            .center { text-align: center; }
+            .title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+            .muted { color: #333; }
+            .divider { border-top: 1px dashed #000; margin: 8px 0; }
+            .line { display: flex; justify-content: space-between; gap: 8px; }
+            .item { margin-bottom: 6px; }
+            .item-name { font-weight: 700; }
+            .item-line { display: flex; justify-content: space-between; gap: 8px; }
+            .total { font-size: 13px; font-weight: 700; margin-top: 6px; }
+            .obs { white-space: pre-wrap; word-break: break-word; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="center title">${escapeHtml(lojaNome || lojaSlug)}</div>
+            <div class="center muted">Comprovante de Venda</div>
+            <div class="center muted">${escapeHtml(venda.id.slice(0, 8))}</div>
+
+            <div class="divider"></div>
+
+            <div class="line"><span>Data:</span><span>${escapeHtml(formatDate(venda.data))}</span></div>
+            <div class="line"><span>Cliente:</span><span>${escapeHtml(venda.cliente_nome || "-")}</span></div>
+            <div class="line"><span>Pagamento:</span><span>${escapeHtml(formatPayment(venda.forma_pagamento))}</span></div>
+            ${garantiaInfo}
+            ${descontoInfo}
+
+            <div class="divider"></div>
+            <div><strong>Itens</strong></div>
+            <div style="margin-top:6px">${itensHtml || "<div>Nenhum item</div>"}</div>
+
+            <div class="divider"></div>
+            <div class="line total"><span>TOTAL</span><span>${escapeHtml(formatCurrency(venda.valor_total))}</span></div>
+
+            ${venda.observacao ? `<div class="divider"></div><div><strong>Obs:</strong></div><div class="obs">${escapeHtml(venda.observacao)}</div>` : ""}
+
+            <div class="divider"></div>
+            <div class="center muted">Obrigado pela preferencia</div>
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => window.close(), 200);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank", "width=420,height=700");
+    if (!printWindow) {
+      toast.error("Nao foi possivel abrir a janela de impressao.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -141,6 +253,9 @@ const VendaDetail = () => {
               </Button>
               <Button onClick={handlePrint} className="bg-[#D4AF37] text-black font-bold hover:bg-[#B5952F]" data-testid="btn-imprimir">
                 <Printer className="w-4 h-4 mr-2" />Imprimir
+              </Button>
+              <Button onClick={handleThermalPrint} variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10" data-testid="btn-imprimir-termica">
+                <Printer className="w-4 h-4 mr-2" />Imprimir Termica
               </Button>
             </>
           ) : (
