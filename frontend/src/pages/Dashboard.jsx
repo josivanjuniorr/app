@@ -33,6 +33,8 @@ const getMesAtualRange = () => {
   };
 };
 
+const DASHBOARD_LIST_LIMIT = 3;
+
 const Dashboard = () => {
   const { slug } = useParams();
   const { user } = useAuth();
@@ -192,17 +194,26 @@ const Dashboard = () => {
         {/* Modelos sem Estoque */}
         <Card className="bg-[#141414] border border-white/5">
           <CardHeader className="border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
+                <CardTitle className="text-lg font-semibold text-white">Modelos sem Estoque</CardTitle>
               </div>
-              <CardTitle className="text-lg font-semibold text-white">Modelos sem Estoque</CardTitle>
+              {stats?.modelos_sem_estoque?.length > DASHBOARD_LIST_LIMIT && (
+                <Link to={`/${lojaSlug}/modelos`}>
+                  <Button size="sm" variant="ghost" className="text-[#D4AF37] hover:bg-[#D4AF37]/10">
+                    Ver mais
+                  </Button>
+                </Link>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-6">
             {stats?.modelos_sem_estoque?.length > 0 ? (
               <ul className="space-y-3">
-                {stats.modelos_sem_estoque.map((modelo) => (
+                {stats.modelos_sem_estoque.slice(0, DASHBOARD_LIST_LIMIT).map((modelo) => (
                   <li key={modelo.id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
                     <span className="text-gray-300">{modelo.nome}</span>
                     <Link to={`/${lojaSlug}/modelos/${modelo.id}`}>
@@ -235,7 +246,7 @@ const Dashboard = () => {
           <CardContent className="p-6">
             {stats?.top_modelos?.length > 0 ? (
               <ul className="space-y-3">
-                {stats.top_modelos.slice(0, 5).map((modelo, index) => (
+                {stats.top_modelos.slice(0, DASHBOARD_LIST_LIMIT).map((modelo, index) => (
                   <li key={modelo.modelo_id} className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-white/5">
                     <div className="flex items-center gap-3">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -254,6 +265,15 @@ const Dashboard = () => {
               </ul>
             ) : (
               <p className="text-gray-500 text-center py-6">Nenhuma venda registrada</p>
+            )}
+            {stats?.top_modelos?.length > DASHBOARD_LIST_LIMIT && (
+              <div className="mt-4 text-right">
+                <Link to={`/${lojaSlug}/relatorio`}>
+                  <Button size="sm" variant="ghost" className="text-[#D4AF37] hover:bg-[#D4AF37]/10">
+                    Ver mais
+                  </Button>
+                </Link>
+              </div>
             )}
           </CardContent>
         </Card>
