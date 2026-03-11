@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API } from "@/App";
@@ -9,10 +9,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Store, ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 
+const extractSlugFromHostname = (hostname) => {
+  if (!hostname) return "";
+  const lowerHostname = hostname.toLowerCase();
+
+  // Ignore local/dev hosts and direct IP access.
+  if (
+    lowerHostname === "localhost" ||
+    lowerHostname.endsWith(".localhost") ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(lowerHostname)
+  ) {
+    return "";
+  }
+
+  const segments = lowerHostname.split(".").filter(Boolean);
+  if (segments.length < 3) return "";
+
+  const candidate = segments[0] === "www" ? "" : segments[0];
+  return candidate.replace(/[^a-z0-9]/g, "");
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const hostSlug = extractSlugFromHostname(window.location.hostname);
+    if (!hostSlug) return;
+
+    setLoading(true);
+    axios
+      .get(`${API}/loja/${hostSlug}/verify`)
+      .then((response) => {
+        if (response.data?.exists) {
+          navigate(`/${hostSlug}/login`, { replace: true });
+        }
+      })
+      .catch(() => {
+        // Keep default home flow when hostname does not map to a store slug.
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

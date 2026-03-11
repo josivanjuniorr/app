@@ -12,11 +12,10 @@ const normalizeBasePath = (slug) => {
 export const setupStoreManifest = (slug) => {
   if (typeof window === "undefined") return;
 
-  // Prefer the static manifest file declared in index.html for installability checks.
+  // Reuse the existing manifest link to avoid duplicate manifest tags.
   const staticManifestLink = document.querySelector(
     "link[rel='manifest']:not([data-store-manifest='true'])",
   );
-  if (staticManifestLink) return;
 
   const basePath = normalizeBasePath(slug);
   const manifest = {
@@ -46,10 +45,12 @@ export const setupStoreManifest = (slug) => {
 
   let manifestLink = document.querySelector("link[data-store-manifest='true']");
   if (!manifestLink) {
-    manifestLink = document.createElement("link");
+    manifestLink = staticManifestLink || document.createElement("link");
     manifestLink.rel = "manifest";
     manifestLink.setAttribute("data-store-manifest", "true");
-    document.head.appendChild(manifestLink);
+    if (!manifestLink.parentNode) {
+      document.head.appendChild(manifestLink);
+    }
   }
 
   if (manifestState.objectUrl) {
