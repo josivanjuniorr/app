@@ -2,6 +2,8 @@ const manifestState = {
   objectUrl: null,
 };
 
+let deferredInstallPrompt = null;
+
 const normalizeBasePath = (slug) => {
   if (!slug) return "/";
   return `/${slug}`;
@@ -9,6 +11,12 @@ const normalizeBasePath = (slug) => {
 
 export const setupStoreManifest = (slug) => {
   if (typeof window === "undefined") return;
+
+  // Prefer the static manifest file declared in index.html for installability checks.
+  const staticManifestLink = document.querySelector(
+    "link[rel='manifest']:not([data-store-manifest='true'])",
+  );
+  if (staticManifestLink) return;
 
   const basePath = normalizeBasePath(slug);
   const manifest = {
@@ -62,4 +70,25 @@ export const registerServiceWorker = async () => {
   } catch (error) {
     console.error("Falha ao registrar service worker:", error);
   }
+};
+
+export const setupInstallPromptListener = () => {
+  if (typeof window === "undefined") return;
+  if (window.__cellcontrolInstallPromptListenerAttached) return;
+
+  window.__cellcontrolInstallPromptListenerAttached = true;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+  });
+};
+
+export const getDeferredInstallPrompt = () => deferredInstallPrompt;
+
+export const clearDeferredInstallPrompt = () => {
+  deferredInstallPrompt = null;
 };

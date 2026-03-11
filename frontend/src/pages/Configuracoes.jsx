@@ -4,7 +4,7 @@ import { Download, Smartphone, CheckCircle2, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { setupStoreManifest } from "@/lib/pwa";
+import { clearDeferredInstallPrompt, getDeferredInstallPrompt, setupStoreManifest } from "@/lib/pwa";
 
 const Configuracoes = () => {
   const { slug } = useParams();
@@ -35,6 +35,8 @@ const Configuracoes = () => {
 
     setIsIOS(iosDevice && webkit);
     setIsInstalled(standalone || iosStandalone);
+    setInstallPrompt(getDeferredInstallPrompt());
+    setSupportsInstallPrompt(Boolean(getDeferredInstallPrompt()));
 
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault();
@@ -73,6 +75,7 @@ const Configuracoes = () => {
         toast.info("Instalacao cancelada.");
       }
 
+      clearDeferredInstallPrompt();
       setInstallPrompt(null);
       return;
     }
