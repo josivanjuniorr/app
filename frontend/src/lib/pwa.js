@@ -6,7 +6,9 @@ let deferredInstallPrompt = null;
 
 const normalizeBasePath = (slug) => {
   if (!slug) return "/";
-  return `/${slug}`;
+  const cleanSlug = String(slug).trim().replace(/^\/+|\/+$/g, "");
+  if (!cleanSlug) return "/";
+  return `/${cleanSlug}/`;
 };
 
 export const setupStoreManifest = (slug) => {
@@ -23,8 +25,9 @@ export const setupStoreManifest = (slug) => {
     short_name: "CellControl",
     description: "Sistema de Gestão de Celulares",
     display: "standalone",
-    start_url: `${basePath}`,
-    scope: `${basePath}/`,
+    id: basePath,
+    start_url: basePath,
+    scope: basePath,
     theme_color: "#0A0A0A",
     background_color: "#0A0A0A",
     icons: [
