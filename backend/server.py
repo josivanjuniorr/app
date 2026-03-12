@@ -131,15 +131,29 @@ class ModeloWithQuantity(Modelo):
 class ProdutoBase(BaseModel):
     modelo_id: str
     cor: str
-    armazenamento: str
+    armazenamento: Optional[str] = None  # New field name
+    memoria: Optional[str] = None  # Legacy field name for compatibility
     memoria_ram: Optional[str] = None
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: float
     valor_compra: Optional[float] = None
+    
+    @property
+    def storage(self) -> str:
+        """Returns armazenamento or memoria, whichever is available"""
+        return self.armazenamento or self.memoria or ""
 
-class ProdutoCreate(ProdutoBase):
-    pass
+class ProdutoCreate(BaseModel):
+    modelo_id: str
+    cor: str
+    armazenamento: Optional[str] = None
+    memoria: Optional[str] = None
+    memoria_ram: Optional[str] = None
+    bateria: Optional[int] = None
+    imei: Optional[str] = None
+    preco: float
+    valor_compra: Optional[float] = None
 
 class ProdutoUpdate(BaseModel):
     cor: Optional[str] = None
@@ -1114,6 +1128,11 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
     for produto in produtos:
         modelo = await db.modelos.find_one({"id": produto["modelo_id"]}, {"_id": 0})
         modelo_nome = modelo["nome"] if modelo else "Modelo removido"
+        # Normalize: ensure armazenamento field exists (handle legacy 'memoria' field)
+        if "armazenamento" not in produto and "memoria" in produto:
+            produto["armazenamento"] = produto["memoria"]
+        elif "armazenamento" not in produto:
+            produto["armazenamento"] = ""
         result.append(ProdutoWithModelo(**produto, modelo_nome=modelo_nome))
     return result
 
@@ -1122,9 +1141,12 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
     loja = await verify_loja_access(slug, payload)
     logging.info(f"=== CRIANDO PRODUTO ===")
     logging.info(f"Loja: {loja['id']} ({loja['nome']})")
-    logging.info(f"Criando produto: cor={produto.cor}, armazenamento={produto.armazenamento}, preco={produto.preco}")
     
-    if not produto.cor or not produto.armazenamento:
+    # Handle both armazenamento and memoria fields
+    storage = produto.armazenamento or produto.memoria
+    logging.info(f"Criando produto: cor={produto.cor}, armazenamento={storage}, preco={produto.preco}")
+    
+    if not produto.cor or not storage:
         raise HTTPException(status_code=400, detail="Cor e armazenamento são obrigatórios")
     if not produto.preco or produto.preco <= 0:
         raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
@@ -1135,7 +1157,12 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
     
     try:
-        produto_obj = Produto(**produto.model_dump(), loja_id=loja["id"])
+        # Ensure armazenamento is set from either field
+        produto_data = produto.model_dump()
+        if not produto_data.get("armazenamento") and produto_data.get("memoria"):
+            produto_data["armazenamento"] = produto_data["memoria"]
+        
+        produto_obj = Produto(**produto_data, loja_id=loja["id"])
         doc = produto_obj.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
         # Garantir que campos críticos estão sempre presentes
