@@ -1128,6 +1128,8 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
         produto_obj = Produto(**produto.model_dump(), loja_id=loja["id"])
         doc = produto_obj.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
+        # Garantir que campos críticos estão sempre presentes
+        doc.setdefault('vendido', False)
         logging.info(f"Documento a inserir: {doc}")
         result = await db.produtos.insert_one(doc)
         logging.info(f"Produto inserido com ID: {result.inserted_id}")
