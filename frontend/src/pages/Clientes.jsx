@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { API, useAuth } from "@/App";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ const ITEMS_PER_PAGE = 15;
 const Clientes = () => {
   const { slug } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
   const lojaSlug = slug || user?.loja_slug;
   
   const [clientes, setClientes] = useState([]);
@@ -24,7 +25,12 @@ const Clientes = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => { if (lojaSlug) fetchClientes(); }, [lojaSlug]);
+  useEffect(() => { 
+    if (lojaSlug) {
+      setLoading(true);
+      fetchClientes(); 
+    }
+  }, [lojaSlug, location.key]);
   useEffect(() => { setCurrentPage(1); }, [search]);
 
   const fetchClientes = async () => {
