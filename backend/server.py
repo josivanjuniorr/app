@@ -131,20 +131,24 @@ class ModeloWithQuantity(Modelo):
 class ProdutoBase(BaseModel):
     modelo_id: str
     cor: str
-    memoria: str
+    armazenamento: str
+    memoria_ram: Optional[str] = None
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: float
+    valor_compra: Optional[float] = None
 
 class ProdutoCreate(ProdutoBase):
     pass
 
 class ProdutoUpdate(BaseModel):
     cor: Optional[str] = None
-    memoria: Optional[str] = None
+    armazenamento: Optional[str] = None
+    memoria_ram: Optional[str] = None
     bateria: Optional[int] = None
     imei: Optional[str] = None
     preco: Optional[float] = None
+    valor_compra: Optional[float] = None
 
 class Produto(ProdutoBase):
     model_config = ConfigDict(extra="ignore")
@@ -1108,8 +1112,8 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
 @loja_router.post("/{slug}/produtos", response_model=Produto)
 async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
-    if not produto.cor or not produto.memoria:
-        raise HTTPException(status_code=400, detail="Cor e memória são obrigatórios")
+    if not produto.cor or not produto.armazenamento:
+        raise HTTPException(status_code=400, detail="Cor e armazenamento são obrigatórios")
     
     modelo = await db.modelos.find_one({"id": produto.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
     if not modelo:
@@ -1282,10 +1286,12 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
         produto_troca = Produto(
             modelo_id=venda.troca.modelo_id,
             cor=venda.troca.cor.strip(),
-            memoria=venda.troca.memoria.strip(),
+            armazenamento=venda.troca.memoria.strip(),
+            memoria_ram=venda.troca.memoria_ram,
             bateria=venda.troca.bateria,
             imei=(venda.troca.imei or "").strip() or None,
             preco=venda.troca.valor_recebido,
+            valor_compra=venda.troca.valor_recebido,
             loja_id=loja["id"]
         )
         troca_doc = produto_troca.model_dump()
@@ -1315,7 +1321,7 @@ async def create_venda(slug: str, venda: VendaCreate, payload: dict = Depends(re
             "modelo_id": produto["modelo_id"],
             "modelo_nome": modelo_nome,
             "cor": produto["cor"],
-            "memoria": produto["memoria"],
+            "memoria": produto.get("armazenamento") or produto.get("memoria", ""),
             "preco": produto["preco"]
         })
         valor_total += produto["preco"]
