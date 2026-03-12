@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Users, Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Users, Plus, Search, Edit, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/Pagination";
 
@@ -141,12 +141,17 @@ const Clientes = () => {
                       <TableCell className="text-gray-400">{cliente.email || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <Link to={`/${lojaSlug}/clientes/${cliente.id}`}>
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10" title="Ver Histórico">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
                           <Link to={`/${lojaSlug}/clientes/editar/${cliente.id}`}>
-                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10">
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10" title="Editar">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-red-400 hover:bg-red-400/10" onClick={() => setDeleteId(cliente.id)}>
+                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-red-400 hover:bg-red-400/10" onClick={() => setDeleteId(cliente.id)} title="Excluir">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>

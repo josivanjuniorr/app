@@ -1279,6 +1279,77 @@ async def delete_cliente(slug: str, cliente_id: str, payload: dict = Depends(req
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
     return {"message": "Cliente excluído com sucesso"}
 
+# Cliente History
+@loja_router.get("/{slug}/clientes/{cliente_id}/historico")
+async def get_cliente_historico(slug: str, cliente_id: str, payload: dict = Depends(require_loja_access)):
+    """Get customer purchase and trade-in history"""
+    loja = await verify_loja_access(slug, payload)
+    
+    # Verify customer exists
+    cliente = await db.clientes.find_one({"id": cliente_id, "loja_id": loja["id"]}, {"_id": 0})
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get all sales for this customer
+    vendas = await db.vendas_concluidas.find(
+        {"cliente_id": cliente_id, "loja_id": loja["id"]}, 
+        {"_id": 0}
+    ).sort("data", -1).to_list(1000)
+    
+    compras = []
+    trocas = []
+    
+    for venda in vendas:
+        itens_parsed = json.loads(venda.get("itens", "[]"))
+        garantia_status = get_garantia_status(venda.get("garantia_ate"))
+        
+        # Add purchase record
+        for item in itens_parsed:
+            compras.append({
+                "venda_id": venda["id"],
+                "data": venda["data"],
+                "modelo_nome": item.get("modelo_nome", ""),
+                "cor": item.get("cor", ""),
+                "memoria": item.get("memoria", ""),
+                "preco": item.get("preco", 0),
+                "forma_pagamento": venda.get("forma_pagamento", ""),
+                "garantia_meses": venda.get("garantia_meses"),
+                "garantia_ate": venda.get("garantia_ate"),
+                "garantia_status": garantia_status
+            })
+        
+        # Check for trade-in in observation
+        observacao = venda.get("observacao", "") or ""
+        if "Troca recebida:" in observacao:
+            # Parse trade-in info from observation
+            import re
+            troca_match = re.search(r"Troca recebida: (.+?) por R\$ ([\d.,]+)", observacao)
+            if troca_match:
+                troca_descricao = troca_match.group(1)
+                troca_valor = float(troca_match.group(2).replace(",", "."))
+                trocas.append({
+                    "venda_id": venda["id"],
+                    "data": venda["data"],
+                    "descricao": troca_descricao,
+                    "valor": troca_valor
+                })
+    
+    # Calculate totals
+    total_compras = sum(c["preco"] for c in compras)
+    total_trocas = sum(t["valor"] for t in trocas)
+    
+    return {
+        "cliente": cliente,
+        "compras": compras,
+        "trocas": trocas,
+        "resumo": {
+            "total_compras": len(compras),
+            "valor_total_compras": total_compras,
+            "total_trocas": len(trocas),
+            "valor_total_trocas": total_trocas
+        }
+    }
+
 # Helper function to calculate warranty status
 def get_garantia_status(garantia_ate: Optional[str]) -> str:
     if not garantia_ate:

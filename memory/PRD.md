@@ -47,7 +47,9 @@ Sistema multi-tenant de controle de celulares para múltiplas lojas de importado
 - [x] CRUD de Modelos de celulares
 - [x] CRUD de Produtos (cor, memória, bateria, IMEI, preço)
 - [x] CRUD de Clientes (com máscaras de CPF e WhatsApp)
+- [x] Histórico do Cliente (compras e trocas)
 - [x] Ponto de Venda completo com campo de garantia e desconto
+- [x] Fluxo de Troca no PDV (celular recebido vai para estoque)
 - [x] Histórico de Vendas com paginação
 - [x] Impressão de comprovante de venda
 - [x] Edição de venda (forma de pagamento e observação)
