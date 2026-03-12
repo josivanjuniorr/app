@@ -1112,18 +1112,39 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
 @loja_router.post("/{slug}/produtos", response_model=Produto)
 async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
+    logging.info(f"Criando produto: cor={produto.cor}, armazenamento={produto.armazenamento}, preco={produto.preco}")
+    
     if not produto.cor or not produto.armazenamento:
         raise HTTPException(status_code=400, detail="Cor e armazenamento são obrigatórios")
+    if not produto.preco or produto.preco <= 0:
+        raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
     
     modelo = await db.modelos.find_one({"id": produto.modelo_id, "loja_id": loja["id"]}, {"_id": 0})
     if not modelo:
+        logging.error(f"Modelo {produto.modelo_id} não encontrado na loja {loja['id']}")
         raise HTTPException(status_code=404, detail="Modelo não encontrado")
     
-    produto_obj = Produto(**produto.model_dump(), loja_id=loja["id"])
-    doc = produto_obj.model_dump()
-    doc['created_at'] = doc['created_at'].isoformat()
-    await db.produtos.insert_one(doc)
-    return produto_obj
+    try:
+        produto_obj = Produto(**produto.model_dump(), loja_id=loja["id"])
+        doc = produto_obj.model_dump()
+        doc['created_at'] = doc['created_at'].isoformat()
+        logging.info(f"Documento a inserir: {doc}")
+        result = await db.produtos.insert_one(doc)
+        logging.info(f"Produto inserido com ID: {result.inserted_id}")
+        
+        # Verificar se realmente foi inserido
+        verify = await db.produtos.find_one({"id": produto_obj.id}, {"_id": 0})
+        if not verify:
+            logging.error(f"Falha na verificação: produto {produto_obj.id} não encontrado após inserção")
+            raise HTTPException(status_code=500, detail="Produto não foi salvo corretamente no banco")
+        
+        logging.info(f"Produto verificado com sucesso: {produto_obj.id}")
+        return produto_obj
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Erro ao criar produto: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erro ao salvar produto: {str(e)}")
 
 @loja_router.get("/{slug}/produtos/{produto_id}", response_model=ProdutoWithModelo)
 async def get_produto(slug: str, produto_id: str, payload: dict = Depends(require_loja_access)):

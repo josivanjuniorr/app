@@ -90,11 +90,15 @@ const ProdutoForm = () => {
         await axios.put(`${API}/loja/${lojaSlug}/produtos/${id}`, data);
         toast.success("Celular atualizado!");
       } else {
-        await axios.post(`${API}/loja/${lojaSlug}/produtos`, { ...data, modelo_id: modeloId });
+        const payload = { ...data, modelo_id: modeloId };
+        console.log("Enviando para backend:", payload);
+        const response = await axios.post(`${API}/loja/${lojaSlug}/produtos`, payload);
+        console.log("Resposta do backend:", response.data);
         toast.success("Celular criado!");
       }
       navigate(`/${lojaSlug}/produtos`);
     } catch (error) {
+      console.error("Erro completo:", error.response);
       toast.error(error.response?.data?.detail || "Erro ao salvar");
     } finally {
       setLoading(false);
