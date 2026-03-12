@@ -1326,13 +1326,24 @@ async def get_cliente_historico(slug: str, cliente_id: str, payload: dict = Depe
             troca_match = re.search(r"Troca recebida: (.+?) por R\$ ([\d.,]+)", observacao)
             if troca_match:
                 troca_descricao = troca_match.group(1)
-                troca_valor = float(troca_match.group(2).replace(",", "."))
-                trocas.append({
-                    "venda_id": venda["id"],
-                    "data": venda["data"],
-                    "descricao": troca_descricao,
-                    "valor": troca_valor
-                })
+                # Clean the value string - remove trailing dots and handle various formats
+                troca_valor_str = troca_match.group(2).rstrip('.').replace(",", ".")
+                # Handle case where there might be multiple dots (e.g., "1.000.00")
+                parts = troca_valor_str.split(".")
+                if len(parts) > 2:
+                    # Assume last part is decimals, rest is integer
+                    troca_valor_str = "".join(parts[:-1]) + "." + parts[-1]
+                try:
+                    troca_valor = float(troca_valor_str)
+                    trocas.append({
+                        "venda_id": venda["id"],
+                        "data": venda["data"],
+                        "descricao": troca_descricao,
+                        "valor": troca_valor
+                    })
+                except ValueError:
+                    # If conversion fails, skip this trade-in entry
+                    logging.warning(f"Could not parse trade-in value: {troca_match.group(2)}")
     
     # Calculate totals
     total_compras = sum(c["preco"] for c in compras)
