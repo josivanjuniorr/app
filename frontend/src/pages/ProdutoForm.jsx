@@ -17,6 +17,8 @@ const ProdutoForm = () => {
   const lojaSlug = slug || user?.loja_slug;
   const isEditing = !!id;
 
+  console.log("ProdutoForm - lojaSlug:", lojaSlug, "user:", user);
+
   const [modelos, setModelos] = useState([]);
   const [modeloId, setModeloId] = useState("");
   const [cor, setCor] = useState("");

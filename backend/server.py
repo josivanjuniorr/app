@@ -1101,7 +1101,15 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
     if vendido is not None:
         query["vendido"] = vendido
     
+    logging.info(f"=== LISTANDO PRODUTOS ===")
+    logging.info(f"Loja: {loja['id']} ({loja['nome']})")
+    logging.info(f"Query: {query}")
+    
     produtos = await db.produtos.find(query, {"_id": 0}).to_list(1000)
+    logging.info(f"Encontrados {len(produtos)} produtos")
+    if produtos:
+        logging.info(f"Primeiro produto: {produtos[0]}")
+    
     result = []
     for produto in produtos:
         modelo = await db.modelos.find_one({"id": produto["modelo_id"]}, {"_id": 0})
@@ -1112,6 +1120,8 @@ async def list_produtos(slug: str, modelo_id: Optional[str] = None, vendido: Opt
 @loja_router.post("/{slug}/produtos", response_model=Produto)
 async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depends(require_loja_access)):
     loja = await verify_loja_access(slug, payload)
+    logging.info(f"=== CRIANDO PRODUTO ===")
+    logging.info(f"Loja: {loja['id']} ({loja['nome']})")
     logging.info(f"Criando produto: cor={produto.cor}, armazenamento={produto.armazenamento}, preco={produto.preco}")
     
     if not produto.cor or not produto.armazenamento:
@@ -1130,9 +1140,9 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
         doc['created_at'] = doc['created_at'].isoformat()
         # Garantir que campos críticos estão sempre presentes
         doc.setdefault('vendido', False)
-        logging.info(f"Documento a inserir: {doc}")
+        logging.info(f"Documento a inserir com loja_id={doc.get('loja_id')}: {doc}")
         result = await db.produtos.insert_one(doc)
-        logging.info(f"Produto inserido com ID: {result.inserted_id}")
+        logging.info(f"Produto inserido com ID MongoDB: {result.inserted_id}")
         
         # Verificar se realmente foi inserido
         verify = await db.produtos.find_one({"id": produto_obj.id}, {"_id": 0})
@@ -1141,6 +1151,7 @@ async def create_produto(slug: str, produto: ProdutoCreate, payload: dict = Depe
             raise HTTPException(status_code=500, detail="Produto não foi salvo corretamente no banco")
         
         logging.info(f"Produto verificado com sucesso: {produto_obj.id}")
+        logging.info(f"Verificado do banco: loja_id={verify.get('loja_id')}, vendido={verify.get('vendido')}")
         return produto_obj
     except HTTPException:
         raise
